@@ -49,7 +49,6 @@ function connectToGame(token) {
     channel = socket.channel("game:" + token);
 
     channel.on("draw", payload => {
-        console.log("draw: ", payload);
         if (payload.type == "clear") {
             clear();
         } else if (payload.type == "draw") {
@@ -135,7 +134,6 @@ function draw(fromX, fromY, toX, toY, color, thickness) {
 }
 
 function sendDraw(fromX, fromY, toX, toY) {
-    console.log("sendDraw: ", fromX, fromY, toX, toY);
     channel.push("draw", {
         type: "draw",
         fromX: fromX,
@@ -151,7 +149,6 @@ function clear() {
     ctx.clearRect(0, 0, w, h);
 }
 function sendClear() {
-    console.log("sendClear");
     channel.push("draw", { type: "clear" });
 }
 

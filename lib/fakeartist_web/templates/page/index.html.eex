@@ -6,6 +6,8 @@
             <%= submit "logout" %>
         </div>
         <% end %>
+        <input type="text" id="token" placeholder="Token"/>
+        <button id="join">Join Game</button>
     <%= else %>
         <%= form_for @conn, Routes.session_path(@conn, :create), [method: :post, as: :user], fn f -> %>
             <div class="form-group">
@@ -13,14 +15,12 @@
             </div>
 
             <div class="form-group">
-                <%= submit "Login" %>
+                <%= submit "Play" %>
             </div>
         <% end %>
     <% end %>
-    <input type="text" id="token" placeholder="Token"/>
-    <button id="join">Join Game</button>
 </div>
-<div class="game">
+<div id="game" style="display: none">
     <div class="draw">
         <canvas id="can" width="500" height="600"></canvas>
         <div class="color-chooser">

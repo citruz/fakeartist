@@ -34,6 +34,7 @@ socket.connect()
 let channel = undefined;
 let messagesContainer = document.querySelector("#messages")
 
+initCanvas()
 
 const urlParams = new URLSearchParams(window.location.search);
 
@@ -43,8 +44,6 @@ document.getElementById("join").addEventListener("click", function(e) {
         connectToGame(token)
     }
 });
-
-
 
 function connectToGame(token) {
     channel = socket.channel("game:" + token);
@@ -67,7 +66,7 @@ function connectToGame(token) {
         .receive("ok", resp => { 
             addMessage(`joined game ${token}`)
             console.log("Joined successfully", resp)
-            initCanvas();
+            document.getElementById("game").style.display = "flex"
         })
         .receive("error", resp => {
             addMessage(`failed to join game ${token}`)

@@ -8,11 +8,11 @@ defmodule FakeartistWeb.SessionController do
         |> put_session(:user_id, UUID.uuid4())
         |> configure_session(renew: true)
         |> redirect(to: "/")
-      end
+    end
     
-      def delete(conn, _) do
+    def delete(conn, _) do
         conn
         |> configure_session(drop: true)
         |> redirect(to: "/")
-      end
     end
+end

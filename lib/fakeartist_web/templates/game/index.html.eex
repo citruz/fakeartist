@@ -1,0 +1,6 @@
+<table>
+<%= for {token, game} <- @games do %>
+<tr>
+<td><%= token %></td>
+<% end %>
+</table>

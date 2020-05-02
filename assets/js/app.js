@@ -3,15 +3,6 @@
 // its own CSS file.
 import "../css/app.scss"
 
-// webpack automatically bundles all modules in your
-// entry points. Those entry points can be configured
-// in "webpack.config.js".
-//
-// Import deps with the dep name or local files with a relative path, for example:
-//
-//     import {Socket} from "phoenix"
-//     import socket from "./socket"
-//
 import {Socket} from "phoenix"
 import "phoenix_html"
 
@@ -28,22 +19,20 @@ var h = 0
 var color = "black"
 var thickness = 2;
 
-let socket = new Socket("/socket", {params: {token: window.userToken}})
-socket.connect()
+
+let socket = undefined;
 
 let channel = undefined;
 let messagesContainer = document.querySelector("#messages")
 
 initCanvas()
 
-const urlParams = new URLSearchParams(window.location.search);
+if (window.gameToken) {
+    socket = new Socket("/socket", {params: {token: window.userToken}})
+    socket.connect()
 
-document.getElementById("join").addEventListener("click", function(e) {
-    let token = document.getElementById("token").value
-    if (token) {
-        connectToGame(token)
-    }
-});
+    connectToGame(window.gameToken)
+}
 
 function connectToGame(token) {
     channel = socket.channel("game:" + token);
@@ -56,6 +45,10 @@ function connectToGame(token) {
         }
     })
 
+    channel.on("player:joined", payload => {
+        addMessage(`${payload.player} joined`)
+    })
+
     channel.on("clear", () => {
         console.log("clear")
         clear()
@@ -65,7 +58,7 @@ function connectToGame(token) {
         .receive("ok", resp => { 
             addMessage(`joined game ${token}`)
             console.log("Joined successfully", resp)
-            document.getElementById("game").style.display = "flex"
+            resp.players.forEach(player => addMessage(`${player} joined`))
         })
         .receive("error", resp => {
             addMessage(`failed to join game ${token}`)

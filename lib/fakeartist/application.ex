@@ -12,9 +12,9 @@ defmodule Fakeartist.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Fakeartist.PubSub},
       # Start the Endpoint (http/https)
-      FakeartistWeb.Endpoint
+      FakeartistWeb.Endpoint,
       # Start a worker by calling: Fakeartist.Worker.start_link(arg)
-      # {Fakeartist.Worker, arg}
+      Fakeartist.Global
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

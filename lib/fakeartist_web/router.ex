@@ -20,6 +20,7 @@ defmodule FakeartistWeb.Router do
 
     get "/", PageController, :index
     resources "/sessions", SessionController, only: [:create, :delete], singleton: true
+    resources "/game", GameController, only: [:create, :delete, :show, :index]
   end
 
   defp put_user_token(conn, _) do

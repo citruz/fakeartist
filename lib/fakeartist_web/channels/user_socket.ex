@@ -2,7 +2,7 @@ defmodule FakeartistWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "room:*", FakeartistWeb.RoomChannel
+  channel "game:*", FakeartistWeb.GameChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
@@ -16,8 +16,14 @@ defmodule FakeartistWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   @impl true
-  def connect(_params, socket, _connect_info) do
-    {:ok, socket}
+  def connect(%{"token" => token}, socket, _connect_info) do
+    # max_age: 1209600 is equivalent to two weeks in seconds
+    case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
+      {:ok, user_data} ->
+        {:ok, assign(socket, :current_user, user_data)}
+      {:error, reason} ->
+        :error
+end
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:

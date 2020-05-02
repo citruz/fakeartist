@@ -1,0 +1,73 @@
+16:38:14.368157 exec-cmd.c:139          trace: resolved executable path from Darwin stack: /Applications/Xcode.app/Contents/Developer/usr/bin/git
+16:38:14.369563 exec-cmd.c:238          trace: resolved executable dir: /Applications/Xcode.app/Contents/Developer/usr/bin
+16:38:14.373279 git.c:439               trace: built-in: git push gigalixir master
+16:38:14.375480 run-command.c:663       trace: run_command: GIT_DIR=.git git-remote-https gigalixir https://git.gigalixir.com/ambitious-enchanted-nandu.git/
+16:38:14.384784 exec-cmd.c:139          trace: resolved executable path from Darwin stack: /Applications/Xcode.app/Contents/Developer/usr/libexec/git-core/git-remote-https
+16:38:14.385616 exec-cmd.c:238          trace: resolved executable dir: /Applications/Xcode.app/Contents/Developer/usr/libexec/git-core
+*   Trying 35.186.255.199...
+* TCP_NODELAY set
+* Connected to git.gigalixir.com (35.186.255.199) port 443 (#0)
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* successfully set certificate verify locations:
+*   CAfile: /etc/ssl/cert.pem
+  CApath: none
+* SSL connection using TLSv1.2 / ECDHE-RSA-CHACHA20-POLY1305
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: CN=git.gigalixir.com
+*  start date: Mar 12 03:34:28 2020 GMT
+*  expire date: Jun 10 03:34:28 2020 GMT
+*  subjectAltName: host "git.gigalixir.com" matched cert's "git.gigalixir.com"
+*  issuer: C=US; O=Google Trust Services; CN=GTS CA 1D2
+*  SSL certificate verify ok.
+* Using HTTP2, server supports multi-use
+* Connection state changed (HTTP/2 confirmed)
+* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+* Using Stream ID: 1 (easy handle 0x7fc1ec826400)
+> GET /ambitious-enchanted-nandu.git/info/refs?service=git-receive-pack HTTP/2
+Host: git.gigalixir.com
+User-Agent: git/2.24.2 (Apple Git-127)
+Accept: */*
+Accept-Encoding: deflate, gzip
+Pragma: no-cache
+
+* Connection state changed (MAX_CONCURRENT_STREAMS == 100)!
+< HTTP/2 401 
+< date: Sat, 02 May 2020 14:38:14 GMT
+< server: Apache/2.4.18 (Ubuntu)
+< www-authenticate: Basic realm="Git Access"
+< content-length: 464
+< content-type: text/html; charset=iso-8859-1
+< via: 1.1 google
+< alt-svc: clear
+< 
+* Ignoring the response-body
+* Connection #0 to host git.gigalixir.com left intact
+* Issue another request to this URL: 'https://git.gigalixir.com/ambitious-enchanted-nandu.git/info/refs?service=git-receive-pack'
+* Found bundle for host git.gigalixir.com: 0x7fc1ebc07160 [can multiplex]
+* Re-using existing connection! (#0) with host git.gigalixir.com
+* Connected to git.gigalixir.com (35.186.255.199) port 443 (#0)
+* Server auth using Basic with user 'fseele@gmail.com'
+* Using Stream ID: 3 (easy handle 0x7fc1ec826400)
+> GET /ambitious-enchanted-nandu.git/info/refs?service=git-receive-pack HTTP/2
+Host: git.gigalixir.com
+Authorization: Basic ZnNlZWxlQGdtYWlsLmNvbTozMjM5OGRkNC1hYzEwLTQ0ZWUtOWMwZS01YWNiOGQzMmZiY2Q=
+User-Agent: git/2.24.2 (Apple Git-127)
+Accept: */*
+Accept-Encoding: deflate, gzip
+Pragma: no-cache
+
+< HTTP/2 200 
+< date: Sat, 02 May 2020 14:38:14 GMT
+< server: Apache/2.4.18 (Ubuntu)
+< expires: Fri, 01 Jan 1980 00:00:00 GMT
+< pragma: no-cache
+< cache-control: no-cache, max-age=0, must-revalidate
+< content-type: application/x-git-receive-pack-advertisement
+< via: 1.1 google
+< alt-svc: clear
+< 
+* Connection #0 to host git.gigalixir.com left intact
+Everything up-to-date
+* Closing connection 0

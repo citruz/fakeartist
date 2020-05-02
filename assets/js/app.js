@@ -31,32 +31,49 @@ var thickness = 2;
 let socket = new Socket("/socket", {params: {token: window.userToken}})
 socket.connect()
 
-let channel = socket.channel("room:lobby", {});
+let channel = undefined;
+let messagesContainer = document.querySelector("#messages")
 
-channel.on("draw", payload => {
-    console.log("draw: ", payload);
-    if (payload.type == "clear") {
-        clear();
-    } else if (payload.type == "draw") {
-        draw(payload.fromX, payload.fromY, payload.toX, payload.toY, payload.color, payload.thickness)
+
+const urlParams = new URLSearchParams(window.location.search);
+
+document.getElementById("join").addEventListener("click", function(e) {
+    let token = document.getElementById("token").value
+    if (token) {
+        connectToGame(token)
     }
-})
+});
 
-channel.on("clear", () => {
-    console.log("clear")
-    clear()
-})
 
-channel.join()
-    .receive("ok", resp => { 
-        console.log("Joined successfully", resp)
-        initCanvas();
+
+function connectToGame(token) {
+    channel = socket.channel("game:" + token);
+
+    channel.on("draw", payload => {
+        console.log("draw: ", payload);
+        if (payload.type == "clear") {
+            clear();
+        } else if (payload.type == "draw") {
+            draw(payload.fromX, payload.fromY, payload.toX, payload.toY, payload.color, payload.thickness)
+        }
     })
-    .receive("error", resp => {
-        alert("faild to join")
-        console.log("Unable to join", resp)
+
+    channel.on("clear", () => {
+        console.log("clear")
+        clear()
     })
 
+    channel.join()
+        .receive("ok", resp => { 
+            addMessage(`joined game ${token}`)
+            console.log("Joined successfully", resp)
+            initCanvas();
+        })
+        .receive("error", resp => {
+            addMessage(`failed to join game ${token}`)
+            console.log("Unable to join", resp)
+        })
+}
 
 
 function initCanvas() {
@@ -157,4 +174,11 @@ function canvasHandler(res, e) {
         currY = e.layerY - canvas.offsetTop;
         sendDraw(prevX, prevY, currX, currY);
     }
+}
+
+function addMessage(msg) {
+    let messageItem = document.createElement("p")
+    let d = new Date()
+    messageItem.innerText = `[${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}] ${msg}`
+    messagesContainer.appendChild(messageItem)
 }

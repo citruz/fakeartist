@@ -30,6 +30,18 @@
   display: none;
 }
 
+.game {
+  display: flex;
+}
+
+#messages {
+  padding: 10px;
+  p {
+    font-size: 0.8em;
+    margin-bottom: 5px;
+  }
+}
+
 .draw {
   width: 500px;
   height: 600px;

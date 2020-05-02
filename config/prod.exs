@@ -15,6 +15,7 @@ config :fakeartist, FakeartistWeb.Endpoint,
   server: true,
   secret_key_base: "${SECRET_KEY_BASE}",
   url: [host: "${APP_NAME}.gigalixirapp.com", port: 443],
+  check_origin: ["https://${APP_NAME}.gigalixirapp.com", "https://fakeartist.felixseele.de"],
   cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Do not print debug messages in production

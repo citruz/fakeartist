@@ -7,15 +7,16 @@ defmodule FakeartistWeb.GameChannel do
         IO.puts("join game: " <> game_token <> " user: " <> socket.assigns.current_user.name)
 
         game = Global.get_game(game_token)
-
+        player_id = socket.assigns.current_user.id
         player_name = socket.assigns.current_user.name
-        case Game.add_player(game, player_name, socket.assigns.current_user.id) do
+
+        case Game.add_player(game, player_name, player_id) do
             :ok ->
                 IO.puts("OK")
                 send(self(), {:after_join, player_name})
                 send(self(), {:send_state, game})
                 socket = assign(socket, :game, game)
-                {:ok, socket}
+                {:ok, %{player_idx: Game.get_player_idx(game, player_id)}, socket}
             reply ->
                 IO.puts("error: #{inspect reply}")
                 {:error, %{error: Atom.to_string(reply)}}
@@ -55,6 +56,16 @@ defmodule FakeartistWeb.GameChannel do
 
         send(self(), {:send_state, socket.assigns.game})
         send(self(), {:send_subject, socket.assigns.game})
+        {:noreply, socket}
+    end
+
+    def handle_in("next_turn", body, socket) do
+        game = socket.assigns.game
+        player_id = socket.assigns.current_user.id
+        if Game.next_turn(game, player_id) == :ok do
+            send(self(), {:send_state, game})
+        end
+
         {:noreply, socket}
     end
 

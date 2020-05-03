@@ -19,6 +19,7 @@ var h = 0
 var color = "black"
 var thickness = 2;
 
+var player_idx = -1;
 
 let socket = undefined;
 
@@ -37,6 +38,17 @@ if (window.gameToken) {
 
 function connectToGame(token) {
     channel = socket.channel("game:" + token);
+    channel.join()
+        .receive("ok", resp => { 
+            console.log("Joined successfully", resp)
+            player_idx = resp.player_idx
+        })
+        .receive("error", resp => {
+            addMessage(`failed to join game (reason: ${resp.error})`)
+            console.log("Unable to join", resp)
+            channel.leave()
+        })
+
 
     channel.on("draw", payload => {
         if (payload.type == "clear") {
@@ -60,16 +72,6 @@ function connectToGame(token) {
         console.log("clear")
         clear()
     })
-
-    channel.join()
-        .receive("ok", resp => { 
-            console.log("Joined successfully", resp)
-        })
-        .receive("error", resp => {
-            addMessage(`failed to join game (reason: ${resp.error})`)
-            console.log("Unable to join", resp)
-            channel.leave()
-        })
 
     // connect to private channel
     privateChannel = socket.channel("user:" + window.userId);
@@ -163,6 +165,14 @@ function updateGameState(infos) {
         state_div.appendChild(btn);
     } else if (state == "drawing") {
         state_div.innerHTML += `<br />Category: ${infos.category}`
+        if (infos.current_player == player_idx) {
+            var btn = document.createElement('button');
+            btn.innerHTML = "Next"
+            btn.addEventListener('click', function() {
+                nextTurn();
+            });
+            state_div.appendChild(btn);
+        }
     }
 }
 
@@ -173,6 +183,10 @@ function updateSubject(category) {
 
 function startGame() {
     channel.push("start_game")
+}
+
+function nextTurn() {
+    channel.push("next_turn")
 }
 
 function setColor(obj) {

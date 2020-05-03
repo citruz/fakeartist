@@ -38,8 +38,8 @@ defmodule Fakeartist.Rules do
         :gen_statem.call(fsm, :select_category)
     end
 
-    def draw(fsm) do
-        :gen_statem.call(fsm, :draw)
+    def next_turn(fsm) do
+        :gen_statem.call(fsm, :next_turn)
     end
 
     def vote(fsm) do
@@ -95,7 +95,7 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, :error}}
     end
 
-    def drawing({:call, from}, :draw, state_data) do
+    def drawing({:call, from}, :next_turn, state_data) do
         state_data = Map.put(state_data, :turn, state_data.turn + 1)
         if state_data.turn == (state_data.num_players - 1) * 2 do
             {:next_state, :game_over, state_data, {:reply, from, :ok}}

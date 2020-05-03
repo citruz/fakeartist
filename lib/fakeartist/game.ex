@@ -24,6 +24,10 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, {:get_player, id})
     end
 
+    def get_player_idx(pid, id) do
+        Game.get_players(pid) |> Enum.find_index(fn p -> Player.id(p) == id end)
+    end
+
     def props(pid) do
         GenServer.call(pid, :props)
     end
@@ -69,6 +73,10 @@ defmodule Fakeartist.Game do
 
     def get_subject(pid) do
         GenServer.call(pid, :get_subject)
+    end
+
+    def next_turn(pid, player) do
+        GenServer.call(pid, {:next_turn, player})
     end
 
     def handle_call({:get_player, id}, _from, state) do
@@ -173,5 +181,28 @@ defmodule Fakeartist.Game do
 
     def handle_call(:get_subject, _from, state) do
         {:reply, state.subject, state}
+    end
+
+    def handle_call({:next_turn, player}, _from, state) do
+        {player, player_idx} = state.players
+        |> Enum.with_index
+        |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
+
+        if player_idx == state.current_player do
+            case Rules.next_turn(state.fsm) do
+                :ok ->
+                    state = if state.current_player == length(state.players) - 1 do
+                        # reset to 1
+                        Map.put(state, :current_player, 1)
+                    else
+                        Map.put(state, :current_player, state.current_player + 1)
+                    end
+                    {:reply, :ok, state}
+                reply ->
+                    {:reply, reply, state}
+            end
+        else
+            {:reply, :error, state}
+        end
     end
 end

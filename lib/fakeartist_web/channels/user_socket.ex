@@ -22,7 +22,7 @@ defmodule FakeartistWeb.UserSocket do
     case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
       {:ok, user_data} ->
         {:ok, assign(socket, :current_user, user_data)}
-      {:error, reason} ->
+      {:error, _reason} ->
         :error
 end
   end

@@ -15,7 +15,7 @@
 
         <input type="text" id="token" placeholder="Token"/>
         <button id="join">Join Game</button>
-    <%= else %>
+    <% else %>
         <%= form_for @conn, Routes.session_path(@conn, :create), [method: :post, as: :user], fn f -> %>
             <div class="form-group">
                 <%= text_input f, :username, placeholder: "Username" %>

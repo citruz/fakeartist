@@ -1,5 +1,5 @@
 <table>
-<%= for {token, game} <- @games do %>
+<%= for {token, _game} <- @games do %>
 <tr>
 <td><%= token %></td>
 <% end %>

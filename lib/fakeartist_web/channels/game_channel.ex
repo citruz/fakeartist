@@ -31,7 +31,7 @@ defmodule FakeartistWeb.GameChannel do
         end
     end
 
-    def handle_in("start_game", body, socket) do
+    def handle_in("start_game", _body, socket) do
         Game.start_game(socket.assigns.game)
         send(self(), {:send_state, socket.assigns.game})
         {:noreply, socket}
@@ -59,7 +59,7 @@ defmodule FakeartistWeb.GameChannel do
         {:noreply, socket}
     end
 
-    def handle_in("next_turn", body, socket) do
+    def handle_in("next_turn", _body, socket) do
         game = socket.assigns.game
         player_id = socket.assigns.current_user.id
         if Game.next_turn(game, player_id) == :ok do
@@ -89,6 +89,11 @@ defmodule FakeartistWeb.GameChannel do
         {:noreply, socket}
     end
 
+    def handle_info({:send_subject, game}, socket) do
+        send_subject_internal(game)
+        {:noreply, socket}
+    end
+
     defp send_subject_internal(game) do
         Enum.each(Game.get_players(game), fn player -> 
             subject = Game.get_subject(game)
@@ -98,10 +103,5 @@ defmodule FakeartistWeb.GameChannel do
                 FakeartistWeb.Endpoint.broadcast("user:" <> Player.id(player), "subject", %{subject: subject})
             end
         end)
-    end
-
-    def handle_info({:send_subject, game}, socket) do
-        send_subject_internal(game)
-        {:noreply, socket}
     end
   end

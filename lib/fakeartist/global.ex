@@ -1,7 +1,7 @@
 defmodule Fakeartist.Global do
     use Agent
 
-    alias Fakeartist.{Global, Game}
+    alias Fakeartist.Game
 
     def start_link(_) do
         Agent.start_link(fn -> %{} end, name: __MODULE__)

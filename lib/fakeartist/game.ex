@@ -184,9 +184,7 @@ defmodule Fakeartist.Game do
     end
 
     def handle_call({:next_turn, player}, _from, state) do
-        {player, player_idx} = state.players
-        |> Enum.with_index
-        |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
+        player_idx = state.players |> Enum.find_index(fn p -> Player.id(p) == player end)
 
         if player_idx == state.current_player do
             case Rules.next_turn(state.fsm) do

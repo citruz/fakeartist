@@ -3,6 +3,7 @@ defmodule FakeartistWeb.UserSocket do
 
   ## Channels
   channel "game:*", FakeartistWeb.GameChannel
+  channel "user:*", FakeartistWeb.UserChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

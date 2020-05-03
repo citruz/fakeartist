@@ -11,8 +11,8 @@ defmodule Fakeartist.Global do
         Agent.get(__MODULE__, &(&1))
     end
 
-    def new_game(token, player_name) do
-        {:ok, game} = Game.start_link(player_name)
+    def new_game(token, player_name, player_id) do
+        {:ok, game} = Game.start_link(player_name, player_id)
         Agent.update(__MODULE__, &Map.put_new(&1, token, game))
         game
     end

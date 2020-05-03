@@ -6,14 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>A Fake Artist Goes To New York</title>
     <link rel="stylesheet" href="<%= Routes.static_path(@conn, "/css/app.css") %>"/>
-    <script>window.userToken = "<%= assigns[:user_token] %>";</script>
+    <script>
+      window.userToken = "<%= assigns[:user_token] %>";
+      <%= if assigns[:current_user] do %>
+      window.userId = "<%= assigns[:current_user].id %>";
+      <%= end %>
+    </script>
     <script defer type="text/javascript" src="<%= Routes.static_path(@conn, "/js/app.js") %>"></script>
   </head>
   <body>
     <header>
       <section class="container">
         <h1>A Fake Artist Goes To New York</h1>
-        <img src="<%= Routes.static_path(@conn, "/images/artist.png") %>" />
+        <a href="/"><img src="<%= Routes.static_path(@conn, "/images/artist.png") %>" /></a>
       </section>
     </header>
     <main role="main" class="container">

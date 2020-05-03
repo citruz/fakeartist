@@ -2,6 +2,7 @@
 <div id="game">
     <div class="draw">
         <canvas id="can" width="500" height="600"></canvas>
+        <!--
         <div class="color-chooser">
             <div style="background:green;" id="green""></div>
             <div style="background:blue;" id="blue"></div>
@@ -12,8 +13,14 @@
             <div style="background:white;" id="white"></div>
         </div>
         <input type="button" value="clear" id="clear" size="23">
+        -->
     </div>
-
-    <div id="messages">
+    <div class="side">
+        <div id="state"></div>
+        <div id="category"></div>
+        <ul id="user-list">
+        </ul>
+        <div id="messages">
+        </div>
     </div>
 </div>

@@ -23,6 +23,7 @@ var thickness = 2;
 let socket = undefined;
 
 let channel = undefined;
+let privateChannel = undefined;
 let messagesContainer = document.querySelector("#messages")
 
 initCanvas()
@@ -49,6 +50,12 @@ function connectToGame(token) {
         addMessage(`${payload.player} joined`)
     })
 
+    channel.on("game:state", payload => {
+        console.log("new state: ", payload)
+        updatePlayerList(payload)
+        updateGameState(payload)
+    })
+
     channel.on("clear", () => {
         console.log("clear")
         clear()
@@ -56,14 +63,33 @@ function connectToGame(token) {
 
     channel.join()
         .receive("ok", resp => { 
-            addMessage(`joined game ${token}`)
             console.log("Joined successfully", resp)
-            resp.players.forEach(player => addMessage(`${player} joined`))
         })
         .receive("error", resp => {
-            addMessage(`failed to join game ${token}`)
+            addMessage(`failed to join game (reason: ${resp.error})`)
             console.log("Unable to join", resp)
+            channel.leave()
         })
+
+    // connect to private channel
+    privateChannel = socket.channel("user:" + window.userId);
+    privateChannel.join()
+        .receive("ok", resp => { 
+            console.log("Joined private channel successfully", resp)
+        })
+        .receive("error", resp => {
+            console.log("Unable to join private channel", resp)
+        })
+
+    privateChannel.on("select_category", () => {
+        let category = prompt("Please enter a category")
+        let subject = prompt("Please enter a subject")
+        channel.push("select_category", {"category": category, "subject": subject})
+    })
+
+    privateChannel.on("subject", (payload) => {
+        updateSubject(payload.subject)
+    })
 }
 
 
@@ -86,7 +112,7 @@ function initCanvas() {
         canvasHandler('out', e)
     }, false);
 
-    var elems = document.getElementsByClassName("color-chooser")[0].children
+    /*var elems = document.getElementsByClassName("color-chooser")[0].children
     Array.from(elems).forEach((el) => {
         el.addEventListener("click", function (e) {
             setColor(el);
@@ -95,7 +121,58 @@ function initCanvas() {
 
     document.getElementById("clear").addEventListener("click", function (e) {
         sendClear();
-    }); 
+    }); */
+}
+
+function updatePlayerList(state) {
+    let players = state.players
+    var list = document.getElementById('user-list');
+
+    var child = list.lastElementChild;  
+    while (child) { 
+        list.removeChild(child); 
+        child = list.lastElementChild; 
+    }
+
+    players.forEach(function(player, i) {
+        var li = document.createElement('li');
+        li.innerHTML = `<span class="color" style="background-color: ${player.color}">&nbsp;&nbsp;</span> ${player.name}`
+        if (player.question_master) {
+            li.innerHTML += " 👑"
+        }
+        if (i === state.current_player) {
+            li.innerHTML += " ✏️"
+        }
+        list.appendChild(li);
+    })
+}
+
+function updateGameState(infos) {
+    let state = infos.state
+    var state_div = document.getElementById('state')
+    state_div.innerHTML = state;
+
+    if (state == "initialized") {
+        state_div.innerHTML += "<br /> Waiting for other players..."
+    } else if (state == "ready") {
+        var btn = document.createElement('button');
+        btn.innerHTML = "Start Game"
+        btn.addEventListener('click', function() {
+            startGame();
+        });
+        state_div.appendChild(btn);
+    } else if (state == "drawing") {
+        state_div.innerHTML += `<br />Category: ${infos.category}`
+    }
+}
+
+function updateSubject(category) {
+    var elem = document.getElementById('category')
+    elem.innerHTML = `Subject: ${category}`;
+}
+
+function startGame() {
+    channel.push("start_game")
 }
 
 function setColor(obj) {
@@ -133,7 +210,6 @@ function sendDraw(fromX, fromY, toX, toY) {
         fromY: fromY,
         toX: toX,
         toY: toY,
-        color: color,
         thickness: thickness,
     })
 }

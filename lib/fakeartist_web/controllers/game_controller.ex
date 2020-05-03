@@ -23,7 +23,7 @@ defmodule FakeartistWeb.GameController do
         token = UUID.uuid4()
         username = get_session(conn, :username)
         IO.puts(username)
-        game = Global.new_game(token, username)
+        game = Global.new_game(token, username, get_session(conn, :user_id))
         conn
         |> put_flash(:info, "New game started!")
         |> redirect(to: Routes.game_path(conn, :show, token))

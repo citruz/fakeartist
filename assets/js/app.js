@@ -20,6 +20,8 @@ var color = "black"
 var thickness = 2;
 
 var player_idx = -1;
+var subject = "";
+var last_infos = undefined;
 
 let socket = undefined;
 
@@ -138,47 +140,96 @@ function updatePlayerList(state) {
 
     players.forEach(function(player, i) {
         var li = document.createElement('li');
-        li.innerHTML = `<span class="color" style="background-color: ${player.color}">&nbsp;&nbsp;</span> ${player.name}`
+        li.innerHTML = `<span class="color" style="background-color: ${player.color}">&nbsp;&nbsp;</span>`
+        li.appendChild(document.createTextNode(player.name));
         if (player.question_master) {
-            li.innerHTML += " 👑"
+            li.innerHTML += "&nbsp;&nbsp;👑"
         }
         if (i === state.current_player) {
-            li.innerHTML += " ✏️"
+            li.innerHTML += "&nbsp;&nbsp;✏️"
         }
         list.appendChild(li);
     })
 }
 
+function genPlayerDiv(name, message) {
+    let div = document.createElement('div');
+    div.id = 'is-drawing'
+    div.classList = ["rounded-box"]
+    if (name) {
+        let span = document.createElement('span')
+        span.appendChild(document.createTextNode(name))
+        div.appendChild(span)
+    }
+    div.appendChild(document.createTextNode(message))
+    return div
+}
+
+function getQuestionMaster(players) {
+    return players.find(pl => pl.question_master).name
+}
+
+function createLabel(label, text) {
+    let p = document.createElement('div')
+    let b = document.createElement('b')
+    b.appendChild(document.createTextNode(`${label}: `))
+    p.append(b)
+    p.appendChild(document.createTextNode(text))
+    return p
+}
+
 function updateGameState(infos) {
+    last_infos = infos;
     let state = infos.state
     var state_div = document.getElementById('state')
-    state_div.innerHTML = state;
+    state_div.innerHTML = ""
+
+    let send_link = document.getElementById('send-link')
+    send_link.hidden = true
 
     if (state == "initialized") {
-        state_div.innerHTML += "<br /> Waiting for other players..."
+        state_div.innerHTML = "Waiting for other players..."
+        send_link.hidden = false
     } else if (state == "ready") {
-        var btn = document.createElement('button');
+        let btn = document.createElement('button');
         btn.innerHTML = "Start Game"
         btn.addEventListener('click', function() {
             startGame();
         });
         state_div.appendChild(btn);
+        send_link.hidden = false
+    } else if (state == "selecting_category") {
+        state_div.appendChild(genPlayerDiv(getQuestionMaster(infos.players), "is selecting a category"))
     } else if (state == "drawing") {
-        state_div.innerHTML += `<br />Category: ${infos.category}`
         if (infos.current_player == player_idx) {
-            var btn = document.createElement('button');
+            state_div.appendChild(genPlayerDiv(null, "Please draw and click Next when you are finished"))
+            let btn = document.createElement('button');
             btn.innerHTML = "Next"
+            btn.classList = ["next-btn"]
             btn.addEventListener('click', function() {
                 nextTurn();
             });
             state_div.appendChild(btn);
+        } else {
+            state_div.appendChild(genPlayerDiv(infos.players[infos.current_player].name, "is drawing"))
         }
+        let infos_div = document.createElement("div");
+        infos_div.classList = ["rounded-box"]
+        infos_div.appendChild(createLabel("Category", infos.category));
+        infos_div.appendChild(createLabel("Subject", subject));
+        infos_div.appendChild(createLabel("Round", `${infos.round}/${infos.num_rounds}`));
+
+        state_div.appendChild(infos_div)
+    } else if (state == "game_over") {
+        state_div.appendChild(genPlayerDiv(null, "Game Over"))
     }
 }
 
 function updateSubject(category) {
-    var elem = document.getElementById('category')
-    elem.innerHTML = `Subject: ${category}`;
+    subject = category;
+    if (last_infos) {
+        updateGameState(last_infos);
+    }
 }
 
 function startGame() {

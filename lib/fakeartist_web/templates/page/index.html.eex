@@ -7,20 +7,25 @@
         </div>
         <% end %>
 
-        <%= form_for @conn, Routes.game_path(@conn, :create), [method: :create, as: :user], fn _ -> %>
+        <%= form_for @conn, Routes.game_path(@conn, :create), [method: :create, as: :user], fn f -> %>
+        <div class="form-group">
+            <label>
+                Rounds: <%= select f, :num_rounds, 2..10 %>
+            </label>
+        </div>
         <div class="form-group">
             <%= submit "Start Game" %>
         </div>
         <% end %>
-
-        <input type="text" id="token" placeholder="Token"/>
-        <button id="join">Join Game</button>
     <% else %>
         <%= form_for @conn, Routes.session_path(@conn, :create), [method: :post, as: :user], fn f -> %>
             <div class="form-group">
                 <%= text_input f, :username, placeholder: "Username" %>
             </div>
 
+            <%= if @join_game_id do %>
+            <input type="hidden" name="game-id" value="<%= @join_game_id %>" />
+            <% end %>
             <div class="form-group">
                 <%= submit "Play" %>
             </div>

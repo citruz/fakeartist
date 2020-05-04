@@ -34,6 +34,43 @@
   display: flex;
 }
 
+.side {
+  padding-left: 10px;
+
+  .rounded-box {
+    background: #f1f0f3;
+    padding: 8px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+
+  #is-drawing {
+    span {
+      display: block;
+    }
+    text-align: center;
+    background-color: #ffb474;
+  }
+
+  .next-btn {
+    display: block;
+    width: 100%;
+  }
+
+  #user-list {
+    li {
+      list-style: none;
+      padding: 8px;
+      border-radius: 5px;
+      background-color: #f1f0f3;
+
+      span {
+        margin-right: 9px;
+      }
+    }
+  }
+}
+
 #messages {
   padding: 10px;
   p {
@@ -43,7 +80,7 @@
 }
 
 .draw {
-  width: 500px;
+  flex: 0 0 500px;
   height: 600px;
   position: relative;
 
@@ -74,4 +111,9 @@
     left: 15px;
     margin: 0;
   }
+}
+
+#send-link {
+  margin-top: 10px;
+  font-size: 0.9em;
 }

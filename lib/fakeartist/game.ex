@@ -1,19 +1,19 @@
 defmodule Fakeartist.Game do
     use GenServer
 
-    defstruct players: [], fsm: :none, category: :none, subject: :none, current_player: :none
+    defstruct players: [], fsm: :none, category: :none, subject: :none, current_player: :none, num_rounds: :none
 
     alias Fakeartist.{Game, Player, Rules, Const}
 
-    def start_link(name, player_id) when not is_nil name do
-        GenServer.start_link(__MODULE__, {name, player_id})
+    def start_link(name, player_id, num_rounds) when (not is_nil name) and (num_rounds > 0) do
+        GenServer.start_link(__MODULE__, {name, player_id, num_rounds})
     end
 
-    def init({name, player_id}) do
+    def init({name, player_id, num_rounds}) do
         {:ok, player} = Player.start_link(name, player_id)
         Player.set_question_master(player, true)
-        {:ok, fsm} = Rules.start_link
-        {:ok, %Game{players: [player], fsm: fsm}}
+        {:ok, fsm} = Rules.start_link(num_rounds)
+        {:ok, %Game{players: [player], fsm: fsm, num_rounds: num_rounds}}
     end
 
     def get_players(pid) do
@@ -89,8 +89,15 @@ defmodule Fakeartist.Game do
 
     def handle_call(:props, _from, state) do
         players = Enum.map(state.players, fn p -> Player.props(p) end)
-        game_state = Atom.to_string(Rules.show_current_state(state.fsm))
-        props = %{players: players, state: game_state, category: state.category, current_player: state.current_player}
+        game_state = Rules.show_current_state(state.fsm)
+        props = %{
+            players: players,
+            state: Atom.to_string(game_state),
+            category: state.category,
+            current_player: state.current_player,
+            round: Rules.get_round(state.fsm),
+            num_rounds: state.num_rounds,
+        }
         {:reply, props, state}
     end
 

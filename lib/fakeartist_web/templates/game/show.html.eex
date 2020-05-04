@@ -1,3 +1,8 @@
+<div class="alert alert-info" id="send-link" hidden>
+    Send game link to friends:
+    <input type="text" value="<%= Phoenix.Controller.current_url(@conn) %>" id="link"/>
+    <button onclick="document.querySelector('#link').select();document.execCommand('copy');">Copy</button>
+</div>
 <script type="text/javascript">window.gameToken = "<%= @token %>";</script>
 <div id="game">
     <div class="draw">

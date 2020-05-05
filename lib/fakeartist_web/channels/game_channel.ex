@@ -32,8 +32,9 @@ defmodule FakeartistWeb.GameChannel do
     end
 
     def handle_in("start_game", _body, socket) do
-        Game.start_game(socket.assigns.game)
-        send(self(), {:send_state, socket.assigns.game})
+        if Game.start_game(socket.assigns.game, socket.assigns.current_user.id) == :ok do
+            send(self(), {:send_state, socket.assigns.game})
+        end
         {:noreply, socket}
     end
 

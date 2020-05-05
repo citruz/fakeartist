@@ -178,6 +178,10 @@ function createLabel(label, text) {
     return p
 }
 
+function playerIsQuestionMaster(players) {
+    return player_idx === players.findIndex(pl => pl.question_master)
+}
+
 function updateGameState(infos) {
     last_infos = infos;
     let state = infos.state
@@ -191,12 +195,14 @@ function updateGameState(infos) {
         state_div.innerHTML = "Waiting for other players..."
         send_link.hidden = false
     } else if (state == "ready") {
-        let btn = document.createElement('button');
-        btn.innerHTML = "Start Game"
-        btn.addEventListener('click', function() {
-            startGame();
-        });
-        state_div.appendChild(btn);
+        if (playerIsQuestionMaster(infos.players)) {
+            let btn = document.createElement('button');
+            btn.innerHTML = "Start Game"
+            btn.addEventListener('click', function() {
+                startGame();
+            });
+            state_div.appendChild(btn);
+        }
         send_link.hidden = false
     } else if (state == "selecting_category") {
         state_div.appendChild(genPlayerDiv(getQuestionMaster(infos.players), "is selecting a category"))

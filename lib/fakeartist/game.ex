@@ -40,8 +40,12 @@ defmodule Fakeartist.Game do
         end
     end
 
-    def start_game(pid) do
-        GenServer.call(pid, :start_game)
+    def start_game(pid, player) do
+        if Game.is_question_master?(pid, player) do
+            GenServer.call(pid, :start_game)
+        else
+            :error
+        end
     end
 
     def can_draw?(pid, player) do
@@ -64,6 +68,8 @@ defmodule Fakeartist.Game do
     def select_category(pid, category, subject, player) do
         if Game.is_question_master?(pid, player) do
             GenServer.call(pid, {:select_category, category, subject})
+        else
+            :error
         end
     end
 

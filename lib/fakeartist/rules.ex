@@ -1,6 +1,6 @@
 defmodule Fakeartist.Rules do
     @behaviour :gen_statem
-    defstruct num_players: 1, turn: 0, round: 1, num_rounds: 0
+    defstruct num_players: 1, turn: 1, round: 1, num_rounds: 0
 
     alias Fakeartist.{Rules, Const}
 
@@ -54,6 +54,10 @@ defmodule Fakeartist.Rules do
 
     def vote(fsm) do
         :gen_statem.call(fsm, :vote)
+    end
+
+    def reveal(fsm) do
+        :gen_statem.call(fsm, :reveal)
     end
 
     ## states
@@ -129,31 +133,36 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, :selecting_category}}
     end
 
+    def selecting_category({:call, from}, :add_player, _state_data) do
+        {:keep_state_and_data, {:reply, from, :game_already_started}}
+    end
+
     def selecting_category({:call, from}, _, _state_data) do
         {:keep_state_and_data, {:reply, from, :error}}
     end
 
 
-
-    def drawing({:call, from}, :next_turn, state_data) do
-        IO.puts("#{inspect state_data}")
-        state_data = Map.put(state_data, :turn, state_data.turn + 1)
-        if state_data.turn == state_data.num_players - 1 do
-            if state_data.round == state_data.num_rounds do
-                # reached end
-                {:next_state, :game_over, state_data, {:reply, from, :ok}}
-            else
-                # next round
-                state_data = Map.put(state_data, :turn, 0)
-                state_data = Map.put(state_data, :round, state_data.round + 1)
-                {:keep_state, state_data, {:reply, from, :ok}}
-            end
-        else
-            {:keep_state, state_data, {:reply, from, :ok}}
-        end
+    def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds} = state_data) 
+    when turn == num_players - 1 and round == num_rounds do
+        # reached end
+        {:next_state, :voting, state_data, {:reply, from, :ok}}
     end
 
-    def drawing({:call, from}, :show_current_state, _state_data) do
+    def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds} = state_data) 
+    when turn == num_players - 1 do
+        # next round
+        state_data = Map.put(state_data, :turn, 1)
+        state_data = Map.put(state_data, :round, state_data.round + 1)
+        {:keep_state, state_data, {:reply, from, :ok}}
+    end
+
+    def drawing({:call, from}, :next_turn, state_data) do
+        # next turn
+        state_data = Map.put(state_data, :turn, state_data.turn + 1)
+        {:keep_state, state_data, {:reply, from, :ok}}
+    end
+
+    def drawing({:call, from}, :show_current_state, state_data) do
         {:keep_state_and_data, {:reply, from, :drawing}}
     end
 
@@ -165,10 +174,54 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, state_data.turn}}
     end
 
+    def drawing({:call, from}, :add_player, _state_data) do
+        {:keep_state_and_data, {:reply, from, :game_already_started}}
+    end
+
     def drawing({:call, from}, _, _state_data) do
         {:keep_state_and_data, {:reply, from, :error}}
     end
 
+
+    def voting({:call, from}, :reveal, state_data) do
+        {:next_state, :waiting_for_next_game, state_data, {:reply, from, :ok}}
+    end
+
+    def voting({:call, from}, :show_current_state, _state_data) do
+        {:keep_state_and_data, {:reply, from, :voting}}
+    end
+
+    def voting({:call, from}, :get_round, state_data) do
+        {:keep_state_and_data, {:reply, from, state_data.round}}
+    end
+
+    def voting({:call, from}, _, _state_data) do
+        {:keep_state_and_data, {:reply, from, :error}}
+    end
+
+
+    def waiting_for_next_game({:call, from}, :start_game, state_data) do
+        state_data = Map.put(state_data, :round, 1)
+        state_data = Map.put(state_data, :turn, 1)
+        {:next_state, :selecting_category, state_data, {:reply, from, :ok}}
+    end
+
+    def waiting_for_next_game({:call, from}, :show_current_state, _state_data) do
+        {:keep_state_and_data, {:reply, from, :waiting_for_next_game}}
+    end
+
+    def waiting_for_next_game({:call, from}, :get_round, state_data) do
+        {:keep_state_and_data, {:reply, from, state_data.round}}
+    end
+
+    def waiting_for_next_game({:call, from}, _, _state_data) do
+        {:keep_state_and_data, {:reply, from, :error}}
+    end
+
+
+    def voting({:call, from}, :get_round, state_data) do
+        {:keep_state_and_data, {:reply, from, state_data.round}}
+    end
 
 
     def game_over({:call, from}, :show_current_state, _state_data) do
@@ -181,6 +234,10 @@ defmodule Fakeartist.Rules do
 
     def game_over({:call, from}, :get_turn, state_data) do
         {:keep_state_and_data, {:reply, from, state_data.turn}}
+    end
+
+    def game_over({:call, from}, :add_player, _state_data) do
+        {:keep_state_and_data, {:reply, from, :game_already_started}}
     end
 
     def game_over({:call, from}, _, _state_data) do

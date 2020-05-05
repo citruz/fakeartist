@@ -38,6 +38,13 @@ defmodule FakeartistWeb.GameChannel do
         {:noreply, socket}
     end
 
+    def handle_in("reveal", _body, socket) do
+        if Game.reveal(socket.assigns.game, socket.assigns.current_user.id) == :ok do
+            send(self(), {:send_state, socket.assigns.game})
+        end
+        {:noreply, socket}
+    end
+
     def handle_in("draw", body, socket) do
         game = socket.assigns.game
         player_id = socket.assigns.current_user.id

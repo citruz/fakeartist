@@ -194,7 +194,7 @@ function updateGameState(infos) {
     if (state == "initialized") {
         state_div.innerHTML = "Waiting for other players..."
         send_link.hidden = false
-    } else if (state == "ready") {
+    } else if (state == "ready" || state == "waiting_for_next_game") {
         if (playerIsQuestionMaster(infos.players)) {
             let btn = document.createElement('button');
             btn.innerHTML = "Start Game"
@@ -203,7 +203,9 @@ function updateGameState(infos) {
             });
             state_div.appendChild(btn);
         }
-        send_link.hidden = false
+        if (state == "ready") {
+            send_link.hidden = false
+        }
     } else if (state == "selecting_category") {
         state_div.appendChild(genPlayerDiv(getQuestionMaster(infos.players), "is selecting a category"))
     } else if (state == "drawing") {
@@ -228,6 +230,16 @@ function updateGameState(infos) {
         state_div.appendChild(infos_div)
     } else if (state == "game_over") {
         state_div.appendChild(genPlayerDiv(null, "Game Over"))
+    } else if (state == "voting") {
+        state_div.appendChild(genPlayerDiv(null, "Voting"))
+        if (playerIsQuestionMaster(infos.players)) {
+            let btn = document.createElement('button');
+            btn.innerHTML = "Reveal"
+            btn.addEventListener('click', function() {
+                reveal();
+            });
+            state_div.appendChild(btn);
+        }
     }
 }
 
@@ -240,6 +252,10 @@ function updateSubject(category) {
 
 function startGame() {
     channel.push("start_game")
+}
+
+function reveal() {
+    channel.push("reveal")
 }
 
 function nextTurn() {

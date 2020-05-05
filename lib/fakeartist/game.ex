@@ -1,7 +1,7 @@
 defmodule Fakeartist.Game do
     use GenServer
 
-    defstruct players: [], fsm: :none, category: :none, subject: :none, current_player: :none, num_rounds: :none
+    defstruct players: [], fsm: :none, category: :none, subject: :none, current_player: :none, num_rounds: :none, i_question_master: :none
 
     alias Fakeartist.{Game, Player, Rules, Const}
 
@@ -48,6 +48,14 @@ defmodule Fakeartist.Game do
         end
     end
 
+    def reveal(pid, player) do
+        if Game.is_question_master?(pid, player) do
+            GenServer.call(pid, :reveal)
+        else
+            :error
+        end
+    end
+
     def can_draw?(pid, player) do
         GenServer.call(pid, {:can_draw?, player})
     end
@@ -84,6 +92,24 @@ defmodule Fakeartist.Game do
     def next_turn(pid, player) do
         GenServer.call(pid, {:next_turn, player})
     end
+
+    defp get_next_player(state) do
+        IO.puts("get_next_player: #{inspect state}")
+        num_players = length(state.players)
+        # first round is a special case
+        next_player = if state.current_player == :none do 
+            0
+        else
+            rem(state.current_player + 1, num_players)
+        end
+
+        if next_player == state.i_question_master do
+            rem(next_player + 1, num_players)
+        else
+            next_player
+        end
+    end
+
 
     def handle_call({:get_player, id}, _from, state) do
         player = Enum.find(state.players, fn(player) ->
@@ -122,14 +148,23 @@ defmodule Fakeartist.Game do
     def handle_call(:start_game, _from, state) do
         case Rules.start_game(state.fsm) do
             :ok ->
+                num_players = length(state.players)
+                last_idx = num_players - 1
+                # select next qm
+                i_qm = case state.i_question_master do
+                    # first round
+                    :none -> 0
+                    ^last_idx -> 0
+                    other -> other + 1
+                end
                 # randomly choose fake artist
-                # i is between 1 and num_players - 1
-                i_fake = :rand.uniform(length(state.players) - 1)
+                # random number is between 1 and num_players - 1
+                i_fake = rem(i_qm + :rand.uniform(num_players - 1), num_players)
                 state.players
                 |> Enum.with_index
                 |> Enum.each(fn {p, i} -> 
                     case i do
-                        0 -> 
+                        ^i_qm -> 
                             Player.set_question_master(p, true)
                             Player.set_fake(p, false)
                         ^i_fake ->
@@ -140,11 +175,17 @@ defmodule Fakeartist.Game do
                             Player.set_fake(p, false)
                     end
                 end)
-                state = Map.put(state, :current_player, 1)
+                state = Map.put(state, :i_question_master, i_qm)
+                state = Map.put(state, :current_player, :none)
+                state = Map.put(state, :current_player, get_next_player(state))
                 {:reply, :ok, state}
             reply ->
                 {:reply, reply, state}
         end
+    end
+
+    def handle_call(:reveal, _from, state) do
+        {:reply, Rules.reveal(state.fsm), state}
     end
 
     def handle_call({:can_draw?, player}, _from, state) do
@@ -202,12 +243,7 @@ defmodule Fakeartist.Game do
         if player_idx == state.current_player do
             case Rules.next_turn(state.fsm) do
                 :ok ->
-                    state = if state.current_player == length(state.players) - 1 do
-                        # reset to 1
-                        Map.put(state, :current_player, 1)
-                    else
-                        Map.put(state, :current_player, state.current_player + 1)
-                    end
+                    state = Map.put(state, :current_player, get_next_player(state))
                     {:reply, :ok, state}
                 reply ->
                     {:reply, reply, state}

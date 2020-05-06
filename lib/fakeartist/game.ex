@@ -9,6 +9,10 @@ defmodule Fakeartist.Game do
         GenServer.start_link(__MODULE__, {name, player_id, num_rounds})
     end
 
+    def terminate(reason, state) do 
+        IO.puts("TERMINATEEEE #{inspect reason} #{inspect state}")
+    end
+
     def init({name, player_id, num_rounds}) do
         {:ok, player} = Player.start_link(name, player_id)
         Player.set_question_master(player, true)
@@ -176,7 +180,7 @@ defmodule Fakeartist.Game do
                     end
                 end)
                 state = Map.put(state, :i_question_master, i_qm)
-                state = Map.put(state, :current_player, :none)
+                state = Map.put(state, :current_player, :i_question_master)
                 state = Map.put(state, :current_player, get_next_player(state))
                 {:reply, :ok, state}
             reply ->

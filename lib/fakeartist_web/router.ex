@@ -4,7 +4,7 @@ defmodule FakeartistWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
-    plug :fetch_flash
+    plug :fetch_live_flash
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :authenticate_user
@@ -21,6 +21,10 @@ defmodule FakeartistWeb.Router do
     get "/", PageController, :index
     resources "/sessions", SessionController, only: [:create, :delete], singleton: true
     resources "/game", GameController, only: [:create, :delete, :show, :index]
+
+    live "/livegame", GameLive.Index, :index, layout: {FakeartistWeb.LayoutView, :root}
+    live "/livegame/new", GameLive.Index, :new, layout: {FakeartistWeb.LayoutView, :root}
+    live "/livegame/:id", GameLive.Show, :show, layout: {FakeartistWeb.LayoutView, :root}
   end
 
   defp put_user_token(conn, _) do

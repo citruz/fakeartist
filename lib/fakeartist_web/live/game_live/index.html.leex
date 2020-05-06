@@ -1,0 +1,30 @@
+<h2>Create Game</h2>
+
+  <button phx-click="addgame">Create</button>
+<h2>Listing Games</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th># players</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="games">
+    <%= for  {token, game} <- @games do %>
+      <tr id="game-<%= token %>">
+        <td><%= token %></td>
+        <td><%= length(Game.get_players(game)) %></td>
+
+        <td>
+          <span><%= live_redirect "Show", to: Routes.game_show_path(@socket, :show, token) %></span>
+          <span><%= link "Delete", to: "#", phx_click: "delete", phx_value_id: token, data: [confirm: "Are you sure?"] %></span>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<span><%= live_patch "New Game", to: Routes.game_index_path(@socket, :new) %></span>

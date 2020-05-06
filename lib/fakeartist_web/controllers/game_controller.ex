@@ -45,10 +45,9 @@ defmodule FakeartistWeb.GameController do
 
     def create(conn, %{"user" => %{"num_rounds" => num_rounds}}) do
         num_rounds = String.to_integer(num_rounds)
-        token = UUID.uuid4()
         username = get_session(conn, :username)
         IO.puts(username)
-        game = Global.new_game(token, username, get_session(conn, :user_id), num_rounds)
+        {:ok, token, _} = Global.new_game(username, get_session(conn, :user_id), num_rounds)
         conn
         |> redirect(to: Routes.game_path(conn, :show, token))
     end

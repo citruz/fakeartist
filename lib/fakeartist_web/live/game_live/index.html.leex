@@ -16,7 +16,7 @@
     <%= for  {token, game} <- @games do %>
       <tr id="game-<%= token %>">
         <td><%= token %></td>
-        <td><%= length(Game.get_players(game)) %></td>
+        <td><%= Process.alive?(game) %><%=length(Game.get_players(game)) %></td>
 
         <td>
           <span><%= live_redirect "Show", to: Routes.game_show_path(@socket, :show, token) %></span>

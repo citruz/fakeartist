@@ -256,4 +256,5 @@ defmodule Fakeartist.Game do
             {:reply, :error, state}
         end
     end
+
 end

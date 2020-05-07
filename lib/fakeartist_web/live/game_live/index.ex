@@ -44,10 +44,12 @@ defmodule FakeartistWeb.GameLive.Index do
     def handle_event("addgame", params, socket) do
       IO.puts("addgame: #{inspect params}")
       {:ok, token, game} = Global.new_game("some_username", "some_user_id", 2)
+      :sys.trace(game, true)
+      :sys.get_status(game) 
+
       IO.puts("addgame: #{inspect Game.props(game)}")
       IO.puts("addgame: #{inspect Global.games[token]}")
-      IO.puts("addgame: #{inspect Game.props(Global.games[token])}")
-
+      #IO.puts("addgame: #{inspect Game.props(Global.games[token])}")
       socket = socket 
       |> assign(:games, fetch_games())
       |> push_redirect(to: "/livegame")

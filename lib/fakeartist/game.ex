@@ -32,15 +32,20 @@ defmodule Fakeartist.Game do
         Game.get_players(pid) |> Enum.find_index(fn p -> Player.id(p) == id end)
     end
 
+    def get_current_player(pid) do
+        GenServer.call(pid, :props)
+    end
+
     def props(pid) do
         GenServer.call(pid, :props)
     end
 
     def add_player(pid, name, id) when name != nil do
-        if Game.get_player(pid, id) == nil do
-            GenServer.call(pid, {:add_player, name, id})
-        else
-            :ok
+        case Game.get_player(pid, id) do
+            nil ->
+                GenServer.call(pid, {:add_player, name, id})
+            player ->
+                {:ok, player}
         end
     end
 
@@ -143,9 +148,9 @@ defmodule Fakeartist.Game do
                 {:ok, player} = Player.start_link(name, id)
                 Player.set_color(player, Enum.at(Const.wxCOLORS, length(state.players) + 1))
                 state = Map.put(state, :players, state.players ++ [player])
-                {:reply, :ok, state}
+                {:reply, {:ok, player}, state}
             reply ->
-                {:reply, reply, state}
+                {:reply, {reply, nil}, state}
         end
     end
 
@@ -180,7 +185,7 @@ defmodule Fakeartist.Game do
                     end
                 end)
                 state = Map.put(state, :i_question_master, i_qm)
-                state = Map.put(state, :current_player, :i_question_master)
+                state = Map.put(state, :current_player, i_qm)
                 state = Map.put(state, :current_player, get_next_player(state))
                 {:reply, :ok, state}
             reply ->
@@ -231,6 +236,10 @@ defmodule Fakeartist.Game do
 
     def handle_call(:get_players, _from, state) do
         {:reply, state.players, state}
+    end
+
+    def handle_call(:get_current_player, _from, state) do
+        {:reply, state.players[state.current_player], state}
     end
 
     def handle_call(:get_category, _from, state) do

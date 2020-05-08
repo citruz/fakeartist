@@ -1,1 +1,49 @@
-<%= length(Game.get_players(@game)) %>
+<%= if @state in [:initialized, :ready] do %>
+<div class="alert alert-info" id="send-link">
+    Send game link to friends:
+    <input type="text" value="<%= @token %>" id="link"/>
+    <button onclick="document.querySelector('#link').select();document.execCommand('copy');">Copy</button>
+</div>
+<% else if @state == :selecting_category do %>
+  <%= live_modal @socket, self(),
+    id: @user.id || :new,
+    title: @page_title,
+    action: @live_action,
+    user: @user,
+    return_to: Routes.user_index_path(@socket, :index) %>
+<% end %>
+<div id="game">
+    <div class="draw">
+        <canvas id="can" width="500" height="600"></canvas>
+        <%#
+        <div class="color-chooser">
+            <div style="background:green;" id="green""></div>
+            <div style="background:blue;" id="blue"></div>
+            <div style="background:red;" id="red"></div>
+            <div style="background:yellow;" id="yellow"></div>
+            <div style="background:orange;" id="orange"></div>
+            <div style="background:black;" id="black"></div>
+            <div style="background:white;" id="white"></div>
+        </div>
+        <input type="button" value="clear" id="clear" size="23">
+        %>
+    </div>
+    <div class="side">
+        <div id="state">
+        <%= render_state_div(assigns, @state) %>
+        </div>
+        <div id="category"></div>
+        <ul id="user-list">
+            <%= for  player <- @players do %>
+            <li>
+                <span class="color" style="background-color: <%= Player.color(player) %>">&nbsp;&nbsp;</span>
+                <%= Player.name(player) %>
+                <%= if Player.is_question_master?(player) do %>&nbsp;&nbsp;👑<% end %>
+                <%= if Game.get_current_player(@game) == player do %>&nbsp;&nbsp;✏️<% end %>
+            </li>
+            <% end %>
+        </ul>
+        <div id="messages">
+        </div>
+    </div>
+</div>

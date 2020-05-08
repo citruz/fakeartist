@@ -1,6 +1,14 @@
 <h2>Create Game</h2>
+  <%= f = form_for :user, "#",
+    id: "user-form",
+    phx_submit: "new_game" %>
 
-  <button phx-click="addgame">Create</button>
+    <div class="form-group">
+      <label>
+          Rounds: <%= select f, :num_rounds, 2..10 %>
+      </label>
+    </div>
+    <%= submit "Create", phx_disable_with: "Please wait..." %>
 <h2>Listing Games</h2>
 
 <table>

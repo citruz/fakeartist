@@ -49,12 +49,12 @@ let messagesContainer = document.querySelector("#messages")
 
 initCanvas()
 
-if (window.gameToken) {
-    socket = new Socket("/socket", {params: {token: window.userToken}})
-    socket.connect()
+// if (window.gameToken) {
+//     socket = new Socket("/socket", {params: {token: window.userToken}})
+//     socket.connect()
 
-    connectToGame(window.gameToken)
-}
+//     connectToGame(window.gameToken)
+// }
 
 function connectToGame(token) {
     channel = socket.channel("game:" + token);

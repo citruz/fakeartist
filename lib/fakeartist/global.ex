@@ -31,11 +31,7 @@ defmodule Fakeartist.Global do
     end
 
     def handle_call({:new_game, player_name, player_id, num_rounds}, _from, state) do
-        IO.puts("slef: #{inspect self()}")
-        IO.puts("slef info : #{inspect Process.info(self())}")
-        IO.puts("new_game: #{inspect player_name} #{inspect player_id} #{inspect num_rounds}")
         token = UUID.uuid4()
-        IO.puts("new_game: token #{inspect token}")
         {:ok, game} = Game.start_link(player_name, player_id, num_rounds)
         games = Map.put(state.games, token, game)
         state = Map.put(state, :games, games)

@@ -104,12 +104,16 @@
     margin-bottom: 10px;
   }
 
-  #is-drawing {
+  .drawing div, .selecting_category div {
     span {
       display: block;
     }
     text-align: center;
     background-color: #ffb474;
+  }
+
+  .voting div {
+    text-align: center;
   }
 
   .next-btn {

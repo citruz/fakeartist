@@ -6,8 +6,8 @@ defmodule Fakeartist.Game do
         fsm: :none,
         category: :none,
         subject: :none,
-        i_current_player: :none,
         num_rounds: :none,
+        i_current_player: :none,
         i_question_master: :none,
         i_fake: :none
     )
@@ -91,6 +91,14 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, :get_state)
     end
 
+    def get_round(pid) do
+        GenServer.call(pid, :get_round)
+    end
+
+    def get_num_rounds(pid) do
+        GenServer.call(pid, :get_num_rounds)
+    end
+
     def select_category(pid, category, subject, player) do
         if Game.is_question_master?(pid, player) do
             GenServer.call(pid, {:select_category, category, subject})
@@ -103,8 +111,14 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, :get_category)
     end
 
-    def get_subject(pid) do
-        GenServer.call(pid, :get_subject)
+    def get_subject(pid, player_id) do
+        player = Game.get_player(pid, player_id)
+        state = Game.get_state(pid)
+        if Player.fake?(player) and state != :waiting_for_next_game do
+            "X"
+        else
+            GenServer.call(pid, :get_subject)
+        end
     end
 
     def next_turn(pid, player) do
@@ -144,7 +158,7 @@ defmodule Fakeartist.Game do
             players: players,
             state: Atom.to_string(game_state),
             category: state.category,
-            current_player: state.i_current_player,
+            i_current_player: state.i_current_player,
             round: Rules.get_round(state.fsm),
             num_rounds: state.num_rounds,
         }
@@ -231,11 +245,19 @@ defmodule Fakeartist.Game do
         {:reply, Rules.show_current_state(state.fsm), state}
     end
 
+    def handle_call(:get_round, _from, state) do
+        {:reply, Rules.get_round(state.fsm), state}
+    end
+
+    def handle_call(:get_num_rounds, _from, state) do
+        {:reply, state.num_rounds, state}
+    end
+
     def handle_call({:select_category, category, subject}, _from, state) do
         case Rules.select_category(state.fsm) do
             :ok ->
                 state = state |> Map.put(:category, category) |> Map.put(:subject, subject)
-                IO.puts("#inspect{state}")
+                IO.puts("#{inspect state}")
                 {:reply, :ok, state}
             reply ->
                 IO.puts("got reply #inspect{state} " <> Atom.to_string(reply))
@@ -271,7 +293,7 @@ defmodule Fakeartist.Game do
             case Rules.next_turn(state.fsm) do
                 :ok ->
                     state = state 
-                    |> Map.put(:current_player, get_next_player(state))
+                    |> Map.put(:i_current_player, get_next_player(state))
                     |> update_players
                     {:reply, :ok, state}
                 reply ->

@@ -46,14 +46,16 @@
     <div class="state <%= @state %>">
     <%= render_state_div(assigns, @state) %>
     </div>
-    <div id="category"></div>
+    <div id="stats">
+    <%= render_stats_div(assigns, @state) %>
+    </div>
     <ul id="user-list">
       <%= for  player <- @players do %>
       <li>
-        <span class="color" style="background-color: <%= Player.color(player) %>">&nbsp;&nbsp;</span>
-        <%= Player.name(player) %>
-        <%= if Player.question_master?(player) do %>&nbsp;&nbsp;👑<% end %>
-        <%= if Player.current_player?(player) do %>&nbsp;&nbsp;✏️<% end %>
+        <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
+        <%= player.name %>
+        <%= if player.question_master? do %>&nbsp;&nbsp;👑<% end %>
+        <%= if player.current_player? do %>&nbsp;&nbsp;✏️<% end %>
       </li>
       <% end %>
     </ul>

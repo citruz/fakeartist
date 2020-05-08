@@ -105,7 +105,7 @@ defmodule FakeartistWeb.GameChannel do
     defp send_subject_internal(game) do
         Enum.each(Game.get_players(game), fn player -> 
             subject = Game.get_subject(game)
-            if Player.is_fake?(player) do
+            if Player.fake?(player) do
                 FakeartistWeb.Endpoint.broadcast("user:" <> Player.id(player), "subject", %{subject: "X"})
             else
                 FakeartistWeb.Endpoint.broadcast("user:" <> Player.id(player), "subject", %{subject: subject})

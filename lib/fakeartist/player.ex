@@ -1,5 +1,5 @@
 defmodule Fakeartist.Player do
-    defstruct name: :none, id: :none, question_master?: false, fake?: false, color: :black
+    defstruct name: :none, id: :none, question_master?: false, current_player?: false, fake?: false, color: :black
 
     alias Fakeartist.Player
 
@@ -15,19 +15,23 @@ defmodule Fakeartist.Player do
         Agent.get(player, fn state -> state.id end)
     end
 
-    def is_question_master?(player) do
+    def question_master?(player) do
         Agent.get(player, fn state -> state.question_master? end)
-    end
-
-    def toggle_question_master(player) do
-        Agent.update(player, fn state -> Map.put(state, :question_master?, !state.question_master?) end)
     end
 
     def set_question_master(player, bool) do
         Agent.update(player, fn state -> Map.put(state, :question_master?, bool) end)
     end
 
-    def is_fake?(player) do
+    def current_player?(player) do
+        Agent.get(player, fn state -> state.current_player? end)
+    end
+
+    def set_current_player(player, bool) do
+        Agent.update(player, fn state -> Map.put(state, :current_player?, bool) end)
+    end
+
+    def fake?(player) do
         Agent.get(player, fn state -> state.fake? end)
     end
 
@@ -44,10 +48,10 @@ defmodule Fakeartist.Player do
     end
 
     def to_string(player) do
-        "(name:#{name(player)}, question_master:#{is_question_master?(player)})"
+        "(name:#{name(player)}, question_master:#{question_master?(player)})"
     end
 
     def props(player) do
-        %{name: name(player), question_master: is_question_master?(player), fake_artist: is_fake?(player), color: color(player)}
+        %{name: name(player), question_master: question_master?(player), fake_artist: fake?(player), color: color(player)}
     end
 end

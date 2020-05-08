@@ -1,7 +1,16 @@
 defmodule Fakeartist.Game do
     use GenServer
 
-    defstruct players: [], fsm: :none, category: :none, subject: :none, current_player: :none, num_rounds: :none, i_question_master: :none
+    defstruct(
+        players: [],
+        fsm: :none,
+        category: :none,
+        subject: :none,
+        i_current_player: :none,
+        num_rounds: :none,
+        i_question_master: :none,
+        i_fake: :none
+    )
 
     alias Fakeartist.{Game, Player, Rules, Const}
 
@@ -33,7 +42,7 @@ defmodule Fakeartist.Game do
     end
 
     def get_current_player(pid) do
-        GenServer.call(pid, :props)
+        GenServer.call(pid, :get_current_player)
     end
 
     def props(pid) do
@@ -71,7 +80,7 @@ defmodule Fakeartist.Game do
 
     def is_question_master?(pid, player) do
         Game.get_player(pid, player)
-        |> Player.is_question_master?
+        |> Player.question_master?
     end
 
     def get_question_master(pid) do
@@ -106,10 +115,10 @@ defmodule Fakeartist.Game do
         IO.puts("get_next_player: #{inspect state}")
         num_players = length(state.players)
         # first round is a special case
-        next_player = if state.current_player == :none do 
+        next_player = if state.i_current_player == :none do 
             0
         else
-            rem(state.current_player + 1, num_players)
+            rem(state.i_current_player + 1, num_players)
         end
 
         if next_player == state.i_question_master do
@@ -135,7 +144,7 @@ defmodule Fakeartist.Game do
             players: players,
             state: Atom.to_string(game_state),
             category: state.category,
-            current_player: state.current_player,
+            current_player: state.i_current_player,
             round: Rules.get_round(state.fsm),
             num_rounds: state.num_rounds,
         }
@@ -154,6 +163,17 @@ defmodule Fakeartist.Game do
         end
     end
 
+    defp update_players(state) do
+        state.players
+        |> Enum.with_index
+        |> Enum.each(fn {p, i} -> 
+            Player.set_current_player(p, state.i_current_player == i)
+            Player.set_fake(p, state.i_fake == i)
+            Player.set_question_master(p, state.i_question_master == i)
+        end)
+        state
+    end
+
     def handle_call(:start_game, _from, state) do
         case Rules.start_game(state.fsm) do
             :ok ->
@@ -166,27 +186,16 @@ defmodule Fakeartist.Game do
                     ^last_idx -> 0
                     other -> other + 1
                 end
+                # first player is the one after question master
+                i_cur_player = rem(i_qm + 1, num_players)
                 # randomly choose fake artist
                 # random number is between 1 and num_players - 1
                 i_fake = rem(i_qm + :rand.uniform(num_players - 1), num_players)
-                state.players
-                |> Enum.with_index
-                |> Enum.each(fn {p, i} -> 
-                    case i do
-                        ^i_qm -> 
-                            Player.set_question_master(p, true)
-                            Player.set_fake(p, false)
-                        ^i_fake ->
-                            Player.set_question_master(p, false)
-                            Player.set_fake(p, true)
-                        _ ->
-                            Player.set_question_master(p, false)
-                            Player.set_fake(p, false)
-                    end
-                end)
-                state = Map.put(state, :i_question_master, i_qm)
-                state = Map.put(state, :current_player, i_qm)
-                state = Map.put(state, :current_player, get_next_player(state))
+                state = state
+                |> Map.put(:i_question_master, i_qm)
+                |> Map.put(:i_current_player, i_cur_player)
+                |> Map.put(:i_fake, i_fake)
+                |> update_players
                 {:reply, :ok, state}
             reply ->
                 {:reply, reply, state}
@@ -203,7 +212,7 @@ defmodule Fakeartist.Game do
                 {player, player_idx} = state.players
                 |> Enum.with_index
                 |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
-                if player_idx == state.current_player do
+                if player_idx == state.i_current_player do
                     {:reply, Player.color(player), state}
                 else
                     {:reply, false, state}
@@ -214,7 +223,7 @@ defmodule Fakeartist.Game do
     end
 
     def handle_call(:get_question_master, _from, state) do
-        player = Enum.find(state.players, fn player -> Player.is_question_master?(player) end)
+        player = Enum.find(state.players, fn player -> Player.question_master?(player) end)
         {:reply, player, state}
     end
 
@@ -238,8 +247,13 @@ defmodule Fakeartist.Game do
         {:reply, state.players, state}
     end
 
+    def handle_call(:get_current_player, _from, %{i_current_player: i_current_player} = state)
+    when i_current_player == :none do
+        {:reply, nil, state}
+    end
+
     def handle_call(:get_current_player, _from, state) do
-        {:reply, state.players[state.current_player], state}
+        {:reply, Enum.at(state.players, state.i_current_player), state}
     end
 
     def handle_call(:get_category, _from, state) do
@@ -253,10 +267,12 @@ defmodule Fakeartist.Game do
     def handle_call({:next_turn, player}, _from, state) do
         player_idx = state.players |> Enum.find_index(fn p -> Player.id(p) == player end)
 
-        if player_idx == state.current_player do
+        if player_idx == state.i_current_player do
             case Rules.next_turn(state.fsm) do
                 :ok ->
-                    state = Map.put(state, :current_player, get_next_player(state))
+                    state = state 
+                    |> Map.put(:current_player, get_next_player(state))
+                    |> update_players
                     {:reply, :ok, state}
                 reply ->
                     {:reply, reply, state}

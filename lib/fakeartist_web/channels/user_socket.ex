@@ -2,8 +2,7 @@ defmodule FakeartistWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "game:*", FakeartistWeb.GameChannel
-  channel "user:*", FakeartistWeb.UserChannel
+  channel "draw:*", FakeartistWeb.GameChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

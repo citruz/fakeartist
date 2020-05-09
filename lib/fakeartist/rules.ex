@@ -195,6 +195,11 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, state_data.round}}
     end
 
+    def voting({:call, from}, :add_player, _state_data) do
+        {:keep_state_and_data, {:reply, from, :game_already_started}}
+    end
+
+
     def voting({:call, from}, _, _state_data) do
         {:keep_state_and_data, {:reply, from, :error}}
     end
@@ -214,14 +219,14 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, state_data.round}}
     end
 
+    def waiting_for_next_game({:call, from}, :add_player, _state_data) do
+        {:keep_state_and_data, {:reply, from, :game_already_started}}
+    end
+
     def waiting_for_next_game({:call, from}, _, _state_data) do
         {:keep_state_and_data, {:reply, from, :error}}
     end
 
-
-    def voting({:call, from}, :get_round, state_data) do
-        {:keep_state_and_data, {:reply, from, state_data.round}}
-    end
 
 
     def game_over({:call, from}, :show_current_state, _state_data) do

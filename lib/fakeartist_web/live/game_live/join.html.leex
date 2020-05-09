@@ -1,0 +1,12 @@
+<h2>Join Game <%= @game_token %></h2>
+<p class="alert alert-info" role="alert">Please choose a username</p>
+<%= form_for :user, Routes.session_path(@socket, :create), [method: :post, as: :user], fn f -> %>
+<div class="form-group">
+<%= text_input f, :username, placeholder: "Username" %>
+</div>
+
+<input type="hidden" name="game_id" value="<%= @game_token %>" />
+<div class="form-group">
+<%= submit "Play" %>
+</div>
+<% end %>

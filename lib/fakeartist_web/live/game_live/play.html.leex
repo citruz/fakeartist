@@ -1,7 +1,7 @@
 <%= if @state in [:initialized, :ready] do %>
 <div class="alert alert-info" id="send-link">
   Send game link to friends:
-  <input type="text" value="<%= @token %>" id="link"/>
+  <input type="text" value="<%= FakeartistWeb.Router.Helpers.url(FakeartistWeb.Endpoint)%><%= Routes.game_join_path(@socket, :join, @token) %>" id="link"/>
   <button onclick="document.querySelector('#link').select();document.execCommand('copy');">Copy</button>
 </div>
 <% end %>
@@ -26,9 +26,9 @@
   </div>
 </div>
 <% end %>
-<div id="game">
+<div id="game" data-token="<%= @token %>">
   <div class="draw">
-    <canvas id="can" width="500" height="600"></canvas>
+    <canvas id="can" width="500" height="600" phx-hook="canvas"></canvas>
     <%#
     <div class="color-chooser">
       <div style="background:green;" id="green""></div>

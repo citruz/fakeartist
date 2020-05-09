@@ -1,14 +1,19 @@
 <h2>Create Game</h2>
-  <%= f = form_for :user, "#",
-    id: "user-form",
-    phx_submit: "new_game" %>
 
-    <div class="form-group">
-      <label>
-          Rounds: <%= select f, :num_rounds, 2..10 %>
-      </label>
-    </div>
-    <%= submit "Create", phx_disable_with: "Please wait..." %>
+<%= form_for :user, Routes.session_path(@socket, :create), [method: :post, as: :user], fn f -> %>
+<div class="form-group">
+  <%= text_input f, :username, placeholder: "Username", value: @username %>
+</div>
+<div class="form-group">
+  <label>
+      Rounds: <%= select f, :num_rounds, 2..10 %>
+  </label>
+</div>
+<div class="form-group">
+  <%= submit "Play" %>
+</div>
+<% end %>
+
 <h2>Listing Games</h2>
 
 <table>
@@ -16,23 +21,24 @@
     <tr>
       <th>ID</th>
       <th># players</th>
+      <th>State</th>
 
       <th></th>
     </tr>
   </thead>
   <tbody id="games">
-    <%= for  {token, game} <- @games do %>
-      <tr id="game-<%= token %>">
-        <td><%= token %></td>
-        <td><%= Process.alive?(game) %><%=length(Game.get_players(game)) %></td>
+    <%= for game <- @games do %>
+      <tr id="game-<%= game.token %>">
+        <td><%= game.token %></td>
+        <td><%= game.num_players %></td>
+        <td><%= game.state %></td>
 
         <td>
-          <span><%= live_redirect "Show", to: Routes.game_show_path(@socket, :show, token) %></span>
-          <span><%= link "Delete", to: "#", phx_click: "delete", phx_value_id: token, data: [confirm: "Are you sure?"] %></span>
+        <%= if game.state in [:initialized, :ready] do %>
+          <span><%= live_redirect "Join", to: Routes.game_join_path(@socket, :join, game.token) %></span>
+        <% end %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
-
-<span><%= live_patch "New Game", to: Routes.game_index_path(@socket, :new) %></span>

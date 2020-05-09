@@ -13,6 +13,14 @@ defmodule FakeartistWeb.GameLive.Index do
     {:ok, socket}
   end
 
+  # not logged in
+  def mount(_params, _session, socket)do
+    socket = socket
+    |> assign(:username, "")
+    |> assign(:games, fetch_games())
+    {:ok, socket}
+  end
+
   @impl true
   def handle_params(params, _url, socket) do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
@@ -23,19 +31,13 @@ defmodule FakeartistWeb.GameLive.Index do
     |> assign(:page_title, "Listing Games")
   end
 
-  @impl
-  def handle_event("new_game", %{"user" => %{"num_rounds" => num_rounds}} = params, socket) do
-    num_rounds = String.to_integer(num_rounds)
-    {:ok, token, game} = Global.new_game(socket.assigns.username, socket.assigns.user_id, num_rounds)
-    {:noreply,
-        socket
-        |> push_redirect(to: "/livegame/" <> token)} # TODO replace with proper Route.game_path
-  end
-
-  defp page_title(:show), do: "Show Games"
-  defp page_title(:new), do: "New Game"
-
   defp fetch_games do
-    Global.games()
+    
+    Enum.map(Global.games(), fn {token, g} -> %{
+      token: token,
+      num_players: length(Game.get_players(g)),
+      state: Game.get_state(g)
+    }
+    end)
   end
 end

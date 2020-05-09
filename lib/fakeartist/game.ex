@@ -125,24 +125,6 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, {:next_turn, player})
     end
 
-    defp get_next_player(state) do
-        IO.puts("get_next_player: #{inspect state}")
-        num_players = length(state.players)
-        # first round is a special case
-        next_player = if state.i_current_player == :none do 
-            0
-        else
-            rem(state.i_current_player + 1, num_players)
-        end
-
-        if next_player == state.i_question_master do
-            rem(next_player + 1, num_players)
-        else
-            next_player
-        end
-    end
-
-
     def handle_call({:get_player, id}, _from, state) do
         player = Enum.find(state.players, fn(player) ->
             Player.id(player) == id
@@ -174,6 +156,23 @@ defmodule Fakeartist.Game do
                 {:reply, {:ok, player}, state}
             reply ->
                 {:reply, {reply, nil}, state}
+        end
+    end
+
+    defp get_next_player(state) do
+        IO.puts("get_next_player: #{inspect state}")
+        num_players = length(state.players)
+        # first round is a special case
+        next_player = if state.i_current_player == :none do 
+            0
+        else
+            rem(state.i_current_player + 1, num_players)
+        end
+
+        if next_player == state.i_question_master do
+            rem(next_player + 1, num_players)
+        else
+            next_player
         end
     end
 

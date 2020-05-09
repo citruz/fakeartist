@@ -9,6 +9,7 @@ defmodule FakeartistWeb.Router do
     plug :put_secure_browser_headers
     plug :authenticate_user
     plug :put_user_token
+    plug :put_root_layout, {FakeartistWeb.LayoutView, :root}
   end
 
   pipeline :api do
@@ -18,13 +19,11 @@ defmodule FakeartistWeb.Router do
   scope "/", FakeartistWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
     resources "/sessions", SessionController, only: [:create, :delete], singleton: true
-    resources "/game", GameController, only: [:create, :delete, :show, :index]
 
-    live "/livegame", GameLive.Index, :index, layout: {FakeartistWeb.LayoutView, :root}
-    live "/livegame/new", GameLive.Index, :new, layout: {FakeartistWeb.LayoutView, :root}
-    live "/livegame/:id", GameLive.Show, :show, layout: {FakeartistWeb.LayoutView, :root}
+    live "/", GameLive.Index, :index
+    live "/play/:id", GameLive.Play, :play
+    live "/join/:id", GameLive.Join, :join
   end
 
   defp put_user_token(conn, _) do

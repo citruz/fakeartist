@@ -1,4 +1,4 @@
-defmodule FakeartistWeb.GameLive.Show do
+defmodule FakeartistWeb.GameLive.Play do
   use FakeartistWeb, :live_view
   
   alias Fakeartist.{Game, Global, Player}
@@ -15,7 +15,7 @@ defmodule FakeartistWeb.GameLive.Show do
     if game == nil do
       socket = socket
       |> put_flash(:error, "Game does not exist")
-      |> redirect(to: "/livegame") # TODO replace with /
+      |> redirect(to: "/")
       {:ok, socket}
     else
       # join game
@@ -35,10 +35,10 @@ defmodule FakeartistWeb.GameLive.Show do
           |> assign(:changeset, category_input_changeset(%{}))
           |> update_game_state
           {:ok, socket}
-        _ ->
+        {err, _} ->
           socket = socket
-          |> put_flash(:error, "Error joining game")
-          |> redirect(to: "/livegame") # TODO replace with /
+          |> put_flash(:error, "Error joining game: " <> Atom.to_string(err))
+          |> redirect(to: "/")
           {:ok, socket}
       end    
     end
@@ -47,8 +47,7 @@ defmodule FakeartistWeb.GameLive.Show do
   # unauthenticated
   def mount(%{"id" => game_token}, _, socket) do
     socket = socket
-    |> put_flash(:info, "Please choose a username first")
-    |> redirect(to: "/?join=" <> game_token)
+    |> redirect(to: Routes.game_join_path(socket, :join, game_token))
     {:ok, socket}
   end
 
@@ -244,7 +243,7 @@ defmodule FakeartistWeb.GameLive.Show do
     """
   end
 
-  defp render_stats_div(_assigns, other_state), do: ""
+  defp render_stats_div(_assigns, _other_state), do: ""
 
   #
   # changeset helpers

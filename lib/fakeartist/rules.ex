@@ -4,7 +4,7 @@ defmodule Fakeartist.Rules do
 
     alias Fakeartist.{Rules, Const}
 
-    def start_link(num_rounds) do
+    def start_link(num_rounds) when is_integer(num_rounds) do
         :gen_statem.start_link(__MODULE__, {:initialized, num_rounds}, [])
     end
 

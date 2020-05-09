@@ -14,7 +14,8 @@ defmodule Fakeartist.Game do
 
     alias Fakeartist.{Game, Player, Rules, Const}
 
-    def start_link(name, player_id, num_rounds) when (not is_nil name) and (num_rounds > 0) do
+    def start_link(name, player_id, num_rounds)
+    when not is_nil name and is_integer num_rounds and num_rounds > 0 do
         GenServer.start_link(__MODULE__, {name, player_id, num_rounds})
     end
 

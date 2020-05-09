@@ -75,7 +75,8 @@ defmodule FakeartistWeb.SessionController do
         |> put_session(:username, username)
         |> generate_user_id
         |> configure_session(renew: true)
-        |> create_game(num_rounds)
+        # TODO this is not nice, think of a way to pass num from check_game_parameters down here
+        |> create_game(String.to_integer(num_rounds))
     end
     
     def delete(conn, _) do

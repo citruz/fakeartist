@@ -94,13 +94,31 @@ function initCanvas() {
   canvas.addEventListener("mousemove", function (e) {
     canvasHandler('move', e)
   }, false);
+  canvas.addEventListener("touchmove", function (e) {
+    console.log("touchmove")
+    canvasHandler('move', e)
+  }, false);
+
   canvas.addEventListener("mousedown", function (e) {
     canvasHandler('down', e)
   }, false);
+  canvas.addEventListener("touchstart", function (e) {
+    console.log("touchdown")
+    canvasHandler('down', e)
+  }, false);
+
   canvas.addEventListener("mouseup", function (e) {
     canvasHandler('up', e)
   }, false);
+  canvas.addEventListener("touchend", function (e) {
+    console.log("touchend")
+    canvasHandler('up', e)
+  }, false);
+
   canvas.addEventListener("mouseout", function (e) {
+    canvasHandler('out', e)
+  }, false);
+  canvas.addEventListener("touchout", function (e) {
     canvasHandler('out', e)
   }, false);
 
@@ -160,6 +178,7 @@ function clear() {
 }
 
 function canvasHandler(res, e) {
+  e.preventDefault();
   if (res == 'down') {
     currX = e.layerX - canvas.offsetLeft;
     currY = e.layerY - canvas.offsetTop;

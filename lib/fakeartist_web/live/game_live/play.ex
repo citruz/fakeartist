@@ -126,6 +126,8 @@ defmodule FakeartistWeb.GameLive.Play do
     if Game.start_game(socket.assigns.game, socket.assigns.player_id) == :ok do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
+
+      Endpoint.broadcast_from(self(), "draw:" <> socket.assigns.token, "clear", %{})
     end
     {:noreply, socket}
   end

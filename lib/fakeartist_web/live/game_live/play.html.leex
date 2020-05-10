@@ -9,7 +9,7 @@
 <div class="phx-modal">
   <div class="phx-modal-content">
     <h2>Please select a category and subject</h2>
-      <%= f = form_for @changeset, "#",
+      <%= f = form_for @category_changeset, "#",
         id: "category-form",
         phx_submit: "select_category",
         phx_change: "validate_category" %>
@@ -45,6 +45,9 @@
   <div class="side">
     <div class="state <%= @state %>">
     <%= render_state_div(assigns, @state) %>
+    </div>
+    <div id="stats">
+    <%= render_config_div(assigns, @state) %>
     </div>
     <div id="stats">
     <%= render_stats_div(assigns, @state) %>

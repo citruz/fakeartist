@@ -18,8 +18,8 @@ defmodule Fakeartist.Global do
         GenServer.call(:global, :games)
     end
 
-    def new_game(player_name, player_id, num_rounds) do
-        GenServer.call(:global, {:new_game, player_name, player_id, num_rounds})
+    def new_game(player_name, player_id) do
+        GenServer.call(:global, {:new_game, player_name, player_id})
     end
 
     def get_game(token) do
@@ -30,9 +30,9 @@ defmodule Fakeartist.Global do
         {:reply, state.games, state}
     end
 
-    def handle_call({:new_game, player_name, player_id, num_rounds}, _from, state) do
+    def handle_call({:new_game, player_name, player_id}, _from, state) do
         token = UUID.uuid4()
-        {:ok, game} = Game.start_link(player_name, player_id, num_rounds)
+        {:ok, game} = Game.start_link(player_name, player_id)
         games = Map.put(state.games, token, game)
         state = Map.put(state, :games, games)
         {:reply, {:ok, token, game}, state}

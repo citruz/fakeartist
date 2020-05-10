@@ -30,10 +30,10 @@ defmodule FakeartistWeb.SessionController do
         end
     end
 
-    defp create_game(conn, num_rounds) do
+    defp create_game(conn) do
         username = get_session(conn, :username)
         user_id = get_session(conn, :user_id)
-        case Global.new_game(username, user_id, num_rounds) do
+        case Global.new_game(username, user_id) do
         {:ok, token, _game} ->
             conn
             |> redirect(to: Routes.game_play_path(conn, :play, token))
@@ -57,7 +57,6 @@ defmodule FakeartistWeb.SessionController do
 
     # join game
     def create(conn, %{"user" => %{"username" => username}, "game_id" => game_id}) do
-        IO.inspect(get_session(conn))
         conn
         |> check_username(username)
         |> put_session(:username, username)
@@ -67,16 +66,14 @@ defmodule FakeartistWeb.SessionController do
     end
 
     # create game
-    def create(conn, %{"user" => %{"username" => username, "num_rounds" => num_rounds}}) do
-        IO.inspect(get_session(conn))
+    def create(conn, %{"user" => %{"username" => username}}) do
         conn
         |> check_username(username)
-        |> check_game_parameters(num_rounds)
+        #|> check_game_parameters(num_rounds) TODO remove, not needed anymore
         |> put_session(:username, username)
         |> generate_user_id
         |> configure_session(renew: true)
-        # TODO this is not nice, think of a way to pass num from check_game_parameters down here
-        |> create_game(String.to_integer(num_rounds))
+        |> create_game
     end
     
     def delete(conn, _) do

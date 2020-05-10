@@ -8,6 +8,10 @@ defmodule FakeartistWeb.GameLive.Play do
     defstruct category: "", subject: ""
   end
 
+  defmodule ConfigInput do
+    defstruct num_rounds: 2, wordlist: :none
+  end
+
   @impl true
   def mount(%{"id" => game_token}, %{"user_id" => user_id, "username" => username}, socket) 
   when user_id != nil and username !=nil do
@@ -32,7 +36,7 @@ defmodule FakeartistWeb.GameLive.Play do
           |> assign(:player_id, user_id)
           |> assign(:page_title, "Game")
           |> assign(:category_submit_enabled, false)
-          |> assign(:changeset, category_input_changeset(%{}))
+          |> assign(:category_changeset, category_changeset(%{}))
           |> update_game_state
           {:ok, socket}
         {err, _} ->
@@ -84,11 +88,12 @@ defmodule FakeartistWeb.GameLive.Play do
     |> assign(:round, Game.get_round(game))
     |> assign(:num_rounds, Game.get_num_rounds(game))
     |> assign(:fake_player_name, fake_player_name(game))
+    |> assign(:config_changeset, config_changeset(%{"num_rounds" => Game.get_num_rounds(game), "wordlist" => Game.get_wordlist(game)}))
 
-    IO.puts("update_game_state:")
-    IO.puts("game: #{inspect Game.props(game)}")
-    IO.puts("players: #{inspect socket.assigns.players}")
-    IO.puts("current_player: #{inspect socket.assigns.current_player}")
+    #IO.puts("update_game_state:")
+    #IO.puts("game: #{inspect Game.props(game)}")
+    #IO.puts("players: #{inspect socket.assigns.players}")
+    #IO.puts("current_player: #{inspect socket.assigns.current_player}")
     socket
   end
 
@@ -99,21 +104,18 @@ defmodule FakeartistWeb.GameLive.Play do
 
   @impl true
   def handle_info(%{event: "new_player"}, socket) do
-    IO.puts("NEW PLAYER")
     socket = socket
     |> update_game_state
     {:noreply, socket}
   end
 
   def handle_info(%{event: "new_state"}, socket) do
-    IO.puts("NEW STATE")
     socket = socket
     |> update_game_state
     {:noreply, socket}
   end
 
   def handle_info(event, socket) do
-    IO.puts("handle_info: #{inspect event}")
     {:noreply, socket}
   end
 
@@ -134,12 +136,35 @@ defmodule FakeartistWeb.GameLive.Play do
 
   @impl true
   def handle_event("validate_category", %{"category_input" => %{"category" => category, "subject" => subject} = input}, socket) do
-    changeset = input |> category_input_changeset()
+    changeset = input |> category_changeset()
     socket = socket 
-    |> assign(:changeset, changeset)
+    |> assign(:category_changeset, changeset)
     # TODO pretty sure this is not how you are supposed to do this :)
     |> assign(:category_submit_enabled, String.length(category) > 0 and String.length(subject) > 0)
     {:noreply, socket }
+  end
+
+  @impl true
+  def handle_event("validate_config", %{"config_input" => %{"num_rounds" => num_rounds, "wordlist" => wordlist} = input}, socket) do
+    num_rounds = String.to_integer(num_rounds)
+    case Game.update_config(socket.assigns.game, socket.assigns.player_id, num_rounds, wordlist) do
+    :ok ->
+      # update changeset
+      socket = socket 
+      |> assign(:config_changeset, input |> config_changeset())
+      |> update_game_state
+
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+      send(self(), %{event: "new_state"})
+
+      {:noreply, socket }
+    err ->
+      socket = socket
+      |> put_flash(:error, "Error updating config: #{inspect err}")
+      |> update_game_state
+
+      {:noreply, socket }
+    end
   end
 
   @impl true
@@ -191,11 +216,17 @@ defmodule FakeartistWeb.GameLive.Play do
   end
 
   defp render_state_div(assigns, :selecting_category) do
-    ~L"""
-    <div class="rounded-box">
-      <span><%= Player.name(Game.get_question_master(@game)) %></span> is selecting a category
-    </div>
-    """
+    # TODO use pattern matching
+    qm = Game.get_question_master(assigns.game)
+    if qm != nil do
+      ~L"""
+      <div class="rounded-box">
+        <span><%= Player.name(qm) %></span> is selecting a category
+      </div>
+      """
+    else 
+      ""
+    end
   end
 
   defp render_state_div(%{current_player: current_player, player: player} = assigns, :drawing)
@@ -247,13 +278,70 @@ defmodule FakeartistWeb.GameLive.Play do
 
   defp render_stats_div(_assigns, _other_state), do: ""
 
+  # TODO move into its own component
+  defp render_config_div(assigns, state) when state in [:initialized, :ready] do
+    render_config_div_helper(assigns, Player.question_master?(assigns.player))
+  end
+
+  defp render_config_div(_assigns, _other_state), do: ""
+
+  # question master
+  defp render_config_div_helper(assigns, true) do 
+    ~L"""
+    <div class="rounded-box">
+      <h3>Game Settings</h3>
+      <%= f = form_for @config_changeset, "#",
+        id: "config-form",
+        phx_submit: "start_game",
+        phx_change: "validate_config" %>
+
+        <div class="form-group">
+          <%= label f, :num_rounds, "Number of rounds" %>
+          <%= select f, :num_rounds, 1..10 %>
+        </div>
+        <div class="form-group">
+          <%= label f, :wordlist %>
+          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"] %>
+        </div>
+    </div>
+    """
+  end
+
+  # regular player
+  defp render_config_div_helper(assigns, false) do 
+    ~L"""
+    <div class="rounded-box">
+      <h3>Game Settings</h3>
+      <%= f = form_for @config_changeset, "#",
+        id: "config-form" %>
+
+        <div class="form-group">
+          <%= label f, :num_rounds, "Number of rounds" %>
+          <%= select f, :num_rounds, 1..10, disabled: true %>
+        </div>
+        <div class="form-group">
+          <%= label f, :wordlist %>
+          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"], disabled: true  %>
+        </div>
+    </div>
+    """
+  end
+
+
   #
   # changeset helpers
   #
-  defp category_input_changeset(params) do
+  defp category_changeset(params) do
     types = %{category: :string, subject: :string}
 
     {%CategoryInput{}, types}
+    |> Ecto.Changeset.cast(params, Map.keys(types))
+  end
+
+  defp config_changeset(params) do
+    types = %{num_rounds: :integer, wordlist: :string}
+
+    {%ConfigInput{}, types}
     |> Ecto.Changeset.cast(params, Map.keys(types))
   end
 end

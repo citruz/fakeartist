@@ -96,6 +96,7 @@
 
 .side {
   padding-left: 10px;
+  width: 100%;
 
   .rounded-box {
     background: #f1f0f3;
@@ -131,6 +132,19 @@
       span {
         margin-right: 9px;
       }
+    }
+  }
+
+  #stats {
+    b {
+      display: inline-block;
+      min-width: 90px;
+    }
+  }
+
+  .state {
+    button {
+      width: 100%;
     }
   }
 }

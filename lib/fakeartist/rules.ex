@@ -71,8 +71,13 @@ defmodule Fakeartist.Rules do
     end
 
     def initialized({:call, from}, :add_player, state_data) do
-        state_data = Map.put(state_data, :num_players, state_data.num_players + 1)
-        {:next_state, :ready, state_data, {:reply, from, :ok}}
+        num_players = state_data.num_players + 1
+        state_data = Map.put(state_data, :num_players, num_players)
+        if num_players >= Const.wxMIN_PLAYERS do
+            {:next_state, :ready, state_data, {:reply, from, :ok}}
+        else
+            {:keep_state, state_data, {:reply, from, :ok}}
+        end
     end
 
     def initialized({:call, from}, {:update_config, num_rounds, has_question_master}, state_data) when num_rounds > 0 do

@@ -179,10 +179,19 @@ function clear() {
 
 function canvasHandler(res, e) {
   e.preventDefault();
-  if (res == 'down') {
-    currX = e.layerX - canvas.offsetLeft;
-    currY = e.layerY - canvas.offsetTop;
+  prevX = currX;
+  prevY = currY;
 
+  if (window.TouchEvent && e instanceof TouchEvent && e.touches[0]) {
+    let rect = canvas.getBoundingClientRect();
+    currX = e.touches[0].pageX - rect.left
+    currY = e.touches[0].pageY - rect.top
+  } else {
+    currX = e.layerX - canvas.offsetLeft
+    currY = e.layerY - canvas.offsetTop
+  }
+  console.log(`curx: ${currX} cury: ${currY}`)
+  if (res == 'down') {
     mouseDown = true;
     sendDraw(currX, currY, currX, currY);
   }
@@ -190,10 +199,6 @@ function canvasHandler(res, e) {
     mouseDown = false;
   }
   if (res == 'move' && mouseDown) {
-    prevX = currX;
-    prevY = currY;
-    currX = e.layerX - canvas.offsetLeft;
-    currY = e.layerY - canvas.offsetTop;
     sendDraw(prevX, prevY, currX, currY);
   }
 }

@@ -53,7 +53,7 @@
     <%= render_stats_div(assigns, @state) %>
     </div>
     <ul id="user-list">
-      <%= for  player <- @players do %>
+      <%= for player <- @players do %>
       <li>
         <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
         <%= player.name %>
@@ -63,6 +63,9 @@
       <% end %>
     </ul>
     <div id="messages">
+    <%= for {time, message} <- @messages do %>
+      <p><span><%= Time.to_iso8601(time) %></span> <%= message %></p>
+    <% end %>
     </div>
   </div>
 </div>

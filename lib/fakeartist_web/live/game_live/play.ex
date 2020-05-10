@@ -1,7 +1,7 @@
 defmodule FakeartistWeb.GameLive.Play do
   use FakeartistWeb, :live_view
   
-  alias Fakeartist.{Game, Global, Player}
+  alias Fakeartist.{Game, Global, Player, Const}
   alias FakeartistWeb.Endpoint
 
   defmodule CategoryInput do
@@ -27,7 +27,11 @@ defmodule FakeartistWeb.GameLive.Play do
         {:ok, player} ->
           topic = "game:" <> game_token
           Endpoint.subscribe(topic)
-          Endpoint.broadcast_from(self(), topic, "new_player", %{})
+          if socket.root_pid != nil do
+            # since mount is called twice when you load the page, we check for root pid which
+            # is only set the second time
+            Endpoint.broadcast_from(self(), topic, "new_player", %{name: username})
+          end
           socket = socket
           |> assign(:topic, topic)
           |> assign(:token, game_token)
@@ -37,6 +41,8 @@ defmodule FakeartistWeb.GameLive.Play do
           |> assign(:page_title, "Game")
           |> assign(:category_submit_enabled, false)
           |> assign(:category_changeset, category_changeset(%{}))
+          |> assign(:min_players, Const.wxMIN_PLAYERS)
+          |> assign(:messages, [])
           |> update_game_state
           {:ok, socket}
         {err, _} ->
@@ -79,8 +85,10 @@ defmodule FakeartistWeb.GameLive.Play do
   
   defp update_game_state(socket) do
     game = socket.assigns.game
+    players = get_players(game)
     socket = socket
-    |> assign(:players, get_players(game))
+    |> assign(:players, players)
+    |> assign(:num_players, length(players))
     |> assign(:state, Game.get_state(game))
     |> assign(:current_player, Game.get_current_player(game))
     |> assign(:category, Game.get_category(game))
@@ -103,8 +111,9 @@ defmodule FakeartistWeb.GameLive.Play do
   #
 
   @impl true
-  def handle_info(%{event: "new_player"}, socket) do
+  def handle_info(%{event: "new_player", payload: %{name: player_name}}, socket) do
     socket = socket
+    |> assign(:messages, socket.assigns.messages ++ [{Time.utc_now(), player_name <> " joined"}])
     |> update_game_state
     {:noreply, socket}
   end
@@ -115,7 +124,7 @@ defmodule FakeartistWeb.GameLive.Play do
     {:noreply, socket}
   end
 
-  def handle_info(event, socket) do
+  def handle_info(_, socket) do
     {:noreply, socket}
   end
 
@@ -199,7 +208,7 @@ defmodule FakeartistWeb.GameLive.Play do
   #
   defp render_state_div(assigns, :initialized) do
     ~L"""
-    <div class="rounded-box">Waiting for other players...</div>
+    <div class="rounded-box">Waiting for at least <%= @min_players - @num_players %> more players...</div>
     """
   end
 
@@ -297,7 +306,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
         <div class="form-group">
           <%= label f, :num_rounds, "Number of rounds" %>
-          <%= select f, :num_rounds, 1..10 %>
+          <%= select f, :num_rounds, 2..5 %>
         </div>
         <div class="form-group">
           <%= label f, :wordlist %>

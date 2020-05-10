@@ -147,7 +147,12 @@ defmodule Fakeartist.Game do
     defp get_next_player(state) do
         #IO.puts("get_next_player: #{inspect state}")
         num_players = length(state.players)
-        rem(state.i_current_player + 1, num_players)
+        idx = rem(state.i_current_player + 1, num_players)
+        if idx == state.i_question_master do
+            rem(idx + 1, num_players)
+        else
+            idx
+        end
     end
 
     defp update_players(state) do
@@ -201,8 +206,10 @@ defmodule Fakeartist.Game do
         end
     end
 
-    defp get_category_and_subject(%Game{wordlist: wordlist}) when wordlist == "none" do
-        {:none, :none}
+    defp get_category_and_subject(%Game{wordlist: wordlist} = state) when wordlist == "none" do
+        state
+        |> Map.put(:category, :none)
+        |> Map.put(:subject, :none)
     end
 
     defp get_category_and_subject(%Game{wordlist: lang} = state) do

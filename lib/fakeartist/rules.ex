@@ -169,23 +169,28 @@ defmodule Fakeartist.Rules do
 
 
     def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds, has_question_master: has_question_master} = state_data) 
-    when ((not has_question_master and turn == num_players - 1) or (has_question_master and turn == num_players))
+    when ((not has_question_master and turn == num_players) or (has_question_master and turn == num_players - 1))
     and round == num_rounds do
         # reached end
+        IO.puts("reached end: #{inspect state_data}")
         {:next_state, :voting, state_data, {:reply, from, :ok}}
     end
 
     def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds, has_question_master: has_question_master} = state_data) 
-    when ((not has_question_master and turn == num_players - 1) or (has_question_master and turn == num_players)) do
+    when ((not has_question_master and turn == num_players) or (has_question_master and turn == num_players - 1)) do
         # next round
+        IO.puts("next round: #{inspect state_data}")
         state_data = Map.put(state_data, :turn, 1)
         state_data = Map.put(state_data, :round, state_data.round + 1)
+        IO.puts("next round after: #{inspect state_data}")
         {:keep_state, state_data, {:reply, from, :ok}}
     end
 
     def drawing({:call, from}, :next_turn, state_data) do
         # next turn
+        IO.puts("next turn: #{inspect state_data}")
         state_data = Map.put(state_data, :turn, state_data.turn + 1)
+        IO.puts("next turn after: #{inspect state_data}")
         {:keep_state, state_data, {:reply, from, :ok}}
     end
 

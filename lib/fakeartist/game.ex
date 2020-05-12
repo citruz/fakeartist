@@ -28,7 +28,7 @@ defmodule Fakeartist.Game do
     end
 
     def update_config(pid, player, num_rounds, wordlist) when is_integer num_rounds do
-        if num_rounds >= Const.wxDEFAULT_NUM_ROUNDS
+        if num_rounds >= 1
                 and wordlist in Const.wxWORDLISTS
                 and Game.is_question_master?(pid, player) do
             GenServer.call(pid, {:update_config, num_rounds, wordlist})

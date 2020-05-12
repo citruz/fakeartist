@@ -72,13 +72,17 @@ defmodule FakeartistWeb.GameLive.Play do
 
   defp get_players(game) do
     # transfrom into struct so that the liveview diffing works
-    Enum.map(Game.get_players(game), fn p -> 
+    players = Game.get_players(game)
+    Enum.map(players, fn p ->
+      votes = Enum.count(players, fn p2 -> Player.voted_for?(p2) == Player.id(p) end)
       %{
         name: Player.name(p),
+        id: Player.id(p),
         color: Player.color(p),
         fake?: Player.fake?(p),
         question_master?: Player.question_master?(p),
         current_player?: Player.current_player?(p),
+        votes: votes
       }
     end)
   end
@@ -135,6 +139,8 @@ defmodule FakeartistWeb.GameLive.Play do
   @impl true
   def handle_event("start_game", _params, socket) do
     if Game.start_game(socket.assigns.game, socket.assigns.player_id) == :ok do
+      #TODO move into game
+      Enum.each(Game.get_players(socket.assigns.game), fn p -> Player.reset_vote(p) end)
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
 
@@ -202,6 +208,13 @@ defmodule FakeartistWeb.GameLive.Play do
     {:noreply, socket}
   end
 
+  def handle_event("vote", %{"player-id" => player_id}, socket) do
+    # TODO move into game
+    Player.vote_for(socket.assigns.player, player_id)
+    Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+    send(self(), %{event: "new_state"})
+    {:noreply, socket}
+  end
 
   #
   # render helpers
@@ -335,6 +348,26 @@ defmodule FakeartistWeb.GameLive.Play do
     </div>
     """
   end
+
+
+  defp render_voting_div(assigns, state) when state in [:voting] do
+    ~L"""
+    <div class="rounded-box">
+      <%= for player <- @players do %>
+        <%= if not player.question_master? do %>
+        <li>
+          <%= player.name %>
+          <%= player.votes %>
+          <button phx-click="vote" phx-value-player-id="<%= player.id %>">Vote</button>
+        </li>
+        <% end %>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp render_voting_div(_assigns, _other_state), do: ""
+
 
 
   #

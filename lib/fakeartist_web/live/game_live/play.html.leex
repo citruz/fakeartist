@@ -46,6 +46,9 @@
     <div class="state <%= @state %>">
     <%= render_state_div(assigns, @state) %>
     </div>
+    <div id="voting">
+    <%= render_voting_div(assigns, @state) %>
+    </div>
     <div id="stats">
     <%= render_config_div(assigns, @state) %>
     </div>

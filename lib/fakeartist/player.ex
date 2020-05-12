@@ -1,5 +1,13 @@
 defmodule Fakeartist.Player do
-    defstruct name: :none, id: :none, question_master?: false, current_player?: false, fake?: false, color: :black
+    defstruct(
+        name: :none,
+        id: :none,
+        question_master?: false,
+        current_player?: false,
+        fake?: false,
+        color: :black,
+        voted_for?: :none
+    )
 
     alias Fakeartist.Player
 
@@ -37,6 +45,18 @@ defmodule Fakeartist.Player do
 
     def set_fake(player, bool) do
         Agent.update(player, fn state -> Map.put(state, :fake?, bool) end)
+    end
+
+    def voted_for?(player) do
+        Agent.get(player, fn state -> state.voted_for? end)
+    end
+
+    def vote_for(player, player_id) do
+        Agent.update(player, fn state -> Map.put(state, :voted_for?, player_id) end)
+    end
+
+    def reset_vote(player) do
+        Agent.update(player, fn state -> Map.put(state, :voted_for?, :none) end)
     end
 
     def color(player) do

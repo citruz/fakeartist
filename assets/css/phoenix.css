@@ -35,16 +35,16 @@ header {
   margin-bottom: 2rem;
 }
 header section {
-  align-items: center;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
 }
 header section :first-child {
   order: 2;
 }
 header section :last-child {
   order: 1;
+  margin-right: 3rem;
 }
 header nav ul,
 header nav li {

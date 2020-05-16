@@ -1,7 +1,7 @@
 defmodule FakeartistWeb.GameChannel do
   use Phoenix.Channel
 
-  alias Fakeartist.{Game, Global, Player}
+  alias Fakeartist.{Game, Global}
 
   def join("draw:" <> game_token, _params, socket) do
     IO.puts("join game: " <> game_token <> " user: " <> socket.assigns.current_user.name)
@@ -15,10 +15,10 @@ defmodule FakeartistWeb.GameChannel do
       player_name = socket.assigns.current_user.name
 
       case Game.add_player(game, player_name, player_id) do
-        {:ok, player} ->
+        {:ok, _player} ->
           IO.puts("OK")
           socket = assign(socket, :game, game)
-          {:ok, %{player_idx: Game.get_player_idx(game, player_id)}, socket}
+          {:ok, %{}, socket}
 
         reply ->
           IO.puts("error: #{inspect(reply)}")

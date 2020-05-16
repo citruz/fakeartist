@@ -36,7 +36,7 @@ defmodule Fakeartist.Game do
     end
   end
 
-  def update_config(pid, _, _, _) do
+  def update_config(_, _, _, _) do
     {:error, :invalid_config}
   end
 
@@ -199,6 +199,33 @@ defmodule Fakeartist.Game do
     state
   end
 
+  defp get_next_question_master(%Game{wordlist: wordlist}) when wordlist != "none" do
+    # no question master
+    :none
+  end
+
+  defp get_next_question_master(state) do
+    # get next question master
+    num_players = length(state.players)
+
+    case state.i_question_master do
+      # first round
+      :none -> 0
+      other -> rem(other + 1, num_players)
+    end
+  end
+
+  defp get_category_and_subject(%Game{wordlist: lang} = state) do
+    categories = Map.keys(Const.wxWORDLIST()[lang])
+    category = Enum.at(categories, :rand.uniform(length(categories)) - 1)
+    subjects = Const.wxWORDLIST()[lang][category]
+    subject = Enum.at(subjects, :rand.uniform(length(subjects)) - 1)
+
+    state
+    |> Map.put(:category, category)
+    |> Map.put(:subject, subject)
+  end
+
   #
   # handlers
   #
@@ -251,17 +278,6 @@ defmodule Fakeartist.Game do
     |> Map.put(:subject, :none)
   end
 
-  defp get_category_and_subject(%Game{wordlist: lang} = state) do
-    categories = Map.keys(Const.wxWORDLIST()[lang])
-    category = Enum.at(categories, :rand.uniform(length(categories)) - 1)
-    subjects = Const.wxWORDLIST()[lang][category]
-    subject = Enum.at(subjects, :rand.uniform(length(subjects)) - 1)
-
-    state
-    |> Map.put(:category, category)
-    |> Map.put(:subject, subject)
-  end
-
   def handle_call({:update_config, num_rounds, wordlist}, _from, state) do
     case Rules.update_config(state.fsm, num_rounds, wordlist == "none") do
       :ok ->
@@ -274,22 +290,6 @@ defmodule Fakeartist.Game do
 
       reply ->
         {:reply, reply, state}
-    end
-  end
-
-  defp get_next_question_master(%Game{wordlist: wordlist}) when wordlist != "none" do
-    # no question master
-    :none
-  end
-
-  defp get_next_question_master(state) do
-    # get next question master
-    num_players = length(state.players)
-
-    case state.i_question_master do
-      # first round
-      :none -> 0
-      other -> rem(other + 1, num_players)
     end
   end
 

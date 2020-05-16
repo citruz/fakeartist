@@ -14,23 +14,6 @@ defmodule FakeartistWeb.SessionController do
     end
   end
 
-  defp return_error(conn) do
-    conn
-    |> put_flash(:error, "Invalid parameter")
-    |> redirect(to: "/")
-    |> halt
-  end
-
-  defp check_game_parameters(conn, num_rounds) do
-    case Integer.parse(num_rounds) do
-      {num, ""} when num > 0 ->
-        conn
-
-      _ ->
-        conn |> return_error
-    end
-  end
-
   defp create_game(conn) do
     username = get_session(conn, :username)
     user_id = get_session(conn, :user_id)
@@ -73,7 +56,6 @@ defmodule FakeartistWeb.SessionController do
   def create(conn, %{"user" => %{"username" => username}}) do
     conn
     |> check_username(username)
-    # |> check_game_parameters(num_rounds) TODO remove, not needed anymore
     |> put_session(:username, username)
     |> generate_user_id
     |> configure_session(renew: true)

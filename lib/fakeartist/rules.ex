@@ -193,8 +193,6 @@ defmodule Fakeartist.Rules do
         %Rules{
           turn: turn,
           num_players: num_players,
-          round: round,
-          num_rounds: num_rounds,
           has_question_master: has_question_master
         } = state_data
       )
@@ -216,7 +214,7 @@ defmodule Fakeartist.Rules do
     {:keep_state, state_data, {:reply, from, :ok}}
   end
 
-  def drawing({:call, from}, :show_current_state, state_data) do
+  def drawing({:call, from}, :show_current_state, _state_data) do
     {:keep_state_and_data, {:reply, from, :drawing}}
   end
 
@@ -236,7 +234,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-  def voting({:call, from}, :vote, state_data) do
+  def voting({:call, from}, :vote, _state_data) do
     {:keep_state_and_data, {:reply, from, :ok}}
   end
 

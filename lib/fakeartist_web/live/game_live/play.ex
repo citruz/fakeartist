@@ -1,6 +1,6 @@
 defmodule FakeartistWeb.GameLive.Play do
   use FakeartistWeb, :live_view
-  
+
   alias Fakeartist.{Game, Global, Player, Const}
   alias FakeartistWeb.Endpoint
 
@@ -13,13 +13,16 @@ defmodule FakeartistWeb.GameLive.Play do
   end
 
   @impl true
-  def mount(%{"id" => game_token}, %{"user_id" => user_id, "username" => username}, socket) 
-  when user_id != nil and username !=nil do
+  def mount(%{"id" => game_token}, %{"user_id" => user_id, "username" => username}, socket)
+      when user_id != nil and username != nil do
     game = Global.get_game(game_token)
+
     if game == nil do
-      socket = socket
-      |> put_flash(:error, "Game does not exist")
-      |> redirect(to: "/")
+      socket =
+        socket
+        |> put_flash(:error, "Game does not exist")
+        |> redirect(to: "/")
+
       {:ok, socket}
     else
       # join game
@@ -27,44 +30,57 @@ defmodule FakeartistWeb.GameLive.Play do
         {:ok, player} ->
           topic = "game:" <> game_token
           Endpoint.subscribe(topic)
+
           if socket.root_pid != nil do
             # since mount is called twice when you load the page, we check for root pid which
             # is only set the second time
-            Endpoint.broadcast_from(self(), topic, "new_player", %{name: username, color: Player.color(player)})
+            Endpoint.broadcast_from(self(), topic, "new_player", %{
+              name: username,
+              color: Player.color(player)
+            })
           end
+
           # set initial values
-          socket = socket
-          |> assign(:topic, topic)
-          |> assign(:token, game_token)
-          |> assign(:game, game)
-          |> assign(:player, player)
-          |> assign(:player_id, user_id)
-          |> assign(:page_title, "Game")
-          |> assign(:category_submit_enabled, false)
-          |> assign(:category_changeset, category_changeset(%{}))
-          |> assign(:min_players, Const.wxMIN_PLAYERS)
-          |> assign(:messages, [])
-          |> assign(:chat_input, %{"message" => "asdasd"})
-          |> update_game_state
+          socket =
+            socket
+            |> assign(:topic, topic)
+            |> assign(:token, game_token)
+            |> assign(:game, game)
+            |> assign(:player, player)
+            |> assign(:player_id, user_id)
+            |> assign(:page_title, "Game")
+            |> assign(:category_submit_enabled, false)
+            |> assign(:category_changeset, category_changeset(%{}))
+            |> assign(:min_players, Const.wxMIN_PLAYERS())
+            |> assign(:messages, [])
+            |> assign(:chat_input, %{"message" => "asdasd"})
+            |> update_game_state
+
           {:ok, socket}
+
         {err, _} ->
-          socket = socket
-          |> put_flash(:error, "Error joining game: " <> Atom.to_string(err))
-          |> redirect(to: "/")
+          socket =
+            socket
+            |> put_flash(:error, "Error joining game: " <> Atom.to_string(err))
+            |> redirect(to: "/")
+
           {:ok, socket}
-      end    
+      end
     end
   end
 
   # unauthenticated
   def mount(%{"id" => game_token}, _, socket) do
-    socket = socket
-    |> redirect(to: Routes.game_join_path(socket, :join, game_token))
+    socket =
+      socket
+      |> redirect(to: Routes.game_join_path(socket, :join, game_token))
+
     {:ok, socket}
   end
 
   defp fake_player_name(game) do
     player = Enum.find(Game.get_players(game), fn p -> Player.fake?(p) end)
+
     if player != nil do
       Player.name(player)
     else
@@ -75,8 +91,10 @@ defmodule FakeartistWeb.GameLive.Play do
   defp get_players(game) do
     # transfrom into struct so that the liveview diffing works
     players = Game.get_players(game)
+
     Enum.map(players, fn p ->
       votes = Enum.count(players, fn p2 -> Player.voted_for?(p2) == Player.id(p) end)
+
       %{
         name: Player.name(p),
         id: Player.id(p),
@@ -88,24 +106,32 @@ defmodule FakeartistWeb.GameLive.Play do
       }
     end)
   end
-  
+
   defp update_game_state(socket) do
     game = socket.assigns.game
     players = get_players(game)
-    socket = socket
-    |> assign(:players, players)
-    |> assign(:num_players, length(players))
-    |> assign(:state, Game.get_state(game))
-    |> assign(:current_player, Game.get_current_player(game))
-    |> assign(:can_control, Game.can_control?(game, socket.assigns.player_id))
-    |> assign(:category, Game.get_category(game))
-    |> assign(:subject, Game.get_subject(game, socket.assigns.player_id))
-    |> assign(:round, Game.get_round(game))
-    |> assign(:num_rounds, Game.get_num_rounds(game))
-    |> assign(:fake_player_name, fake_player_name(game))
-    |> assign(:controller_name, Player.name(Game.controller(game)))
-    |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
-    |> assign(:config_changeset, config_changeset(%{"num_rounds" => Game.get_num_rounds(game), "wordlist" => Game.get_wordlist(game)}))
+
+    socket =
+      socket
+      |> assign(:players, players)
+      |> assign(:num_players, length(players))
+      |> assign(:state, Game.get_state(game))
+      |> assign(:current_player, Game.get_current_player(game))
+      |> assign(:can_control, Game.can_control?(game, socket.assigns.player_id))
+      |> assign(:category, Game.get_category(game))
+      |> assign(:subject, Game.get_subject(game, socket.assigns.player_id))
+      |> assign(:round, Game.get_round(game))
+      |> assign(:num_rounds, Game.get_num_rounds(game))
+      |> assign(:fake_player_name, fake_player_name(game))
+      |> assign(:controller_name, Player.name(Game.controller(game)))
+      |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
+      |> assign(
+        :config_changeset,
+        config_changeset(%{
+          "num_rounds" => Game.get_num_rounds(game),
+          "wordlist" => Game.get_wordlist(game)
+        })
+      )
 
     # IO.puts("update_game_state:")
     # IO.puts("game: #{inspect Game.props(game)}")
@@ -115,7 +141,6 @@ defmodule FakeartistWeb.GameLive.Play do
     socket
   end
 
-
   #
   # PubSub
   #
@@ -123,29 +148,38 @@ defmodule FakeartistWeb.GameLive.Play do
   @impl true
   def handle_info(%{event: "new_player", payload: %{name: player_name, color: color}}, socket) do
     IO.puts("new player")
-    socket = socket
-    |> assign(:messages, socket.assigns.messages ++ [{:join, color, player_name}])
-    |> update_game_state
+
+    socket =
+      socket
+      |> assign(:messages, socket.assigns.messages ++ [{:join, color, player_name}])
+      |> update_game_state
+
     {:noreply, socket}
   end
 
   def handle_info(%{event: "new_state"}, socket) do
-    socket = socket
-    |> update_game_state
+    socket =
+      socket
+      |> update_game_state
+
     {:noreply, socket}
   end
 
-  def handle_info(%{event: "new_message", payload: %{from: player_name, message: message}}, socket) do
-    socket = socket
-    |> assign(:messages, socket.assigns.messages ++ [{:message, player_name, message}])
+  def handle_info(
+        %{event: "new_message", payload: %{from: player_name, message: message}},
+        socket
+      ) do
+    socket =
+      socket
+      |> assign(:messages, socket.assigns.messages ++ [{:message, player_name, message}])
+
     {:noreply, socket}
   end
 
   def handle_info(event, socket) do
-    IO.puts("unhandled info: #{inspect event}")
+    IO.puts("unhandled info: #{inspect(event)}")
     {:noreply, socket}
   end
-
 
   #
   # actions
@@ -158,58 +192,83 @@ defmodule FakeartistWeb.GameLive.Play do
 
       Endpoint.broadcast_from(self(), "draw:" <> socket.assigns.token, "clear", %{})
     end
+
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("validate_category", %{"category_input" => %{"category" => category, "subject" => subject} = input}, socket) do
+  def handle_event(
+        "validate_category",
+        %{"category_input" => %{"category" => category, "subject" => subject} = input},
+        socket
+      ) do
     changeset = input |> category_changeset()
-    socket = socket 
-    |> assign(:category_changeset, changeset)
-    # TODO pretty sure this is not how you are supposed to do this :)
-    |> assign(:category_submit_enabled, String.length(category) > 0 and String.length(subject) > 0)
-    {:noreply, socket }
+
+    socket =
+      socket
+      |> assign(:category_changeset, changeset)
+      # TODO pretty sure this is not how you are supposed to do this :)
+      |> assign(
+        :category_submit_enabled,
+        String.length(category) > 0 and String.length(subject) > 0
+      )
+
+    {:noreply, socket}
   end
 
   @impl true
-  def handle_event("validate_config", %{"config_input" => %{"num_rounds" => num_rounds, "wordlist" => wordlist} = input}, socket) do
+  def handle_event(
+        "validate_config",
+        %{"config_input" => %{"num_rounds" => num_rounds, "wordlist" => wordlist} = input},
+        socket
+      ) do
     num_rounds = String.to_integer(num_rounds)
+
     case Game.update_config(socket.assigns.game, socket.assigns.player_id, num_rounds, wordlist) do
-    :ok ->
-      # update changeset
-      socket = socket 
-      |> assign(:config_changeset, input |> config_changeset())
-      |> update_game_state
+      :ok ->
+        # update changeset
+        socket =
+          socket
+          |> assign(:config_changeset, input |> config_changeset())
+          |> update_game_state
 
-      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
-      send(self(), %{event: "new_state"})
+        Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+        send(self(), %{event: "new_state"})
 
-      {:noreply, socket }
-    err ->
-      socket = socket
-      |> put_flash(:error, "Error updating config: #{inspect err}")
-      |> update_game_state
+        {:noreply, socket}
 
-      {:noreply, socket }
+      err ->
+        socket =
+          socket
+          |> put_flash(:error, "Error updating config: #{inspect(err)}")
+          |> update_game_state
+
+        {:noreply, socket}
     end
   end
 
   @impl true
-  def handle_event("select_category", %{"category_input" => %{"category" => category, "subject" => subject}}, socket) do
+  def handle_event(
+        "select_category",
+        %{"category_input" => %{"category" => category, "subject" => subject}},
+        socket
+      ) do
     if String.length(category) > 0 and String.length(subject) > 0 do
       Game.select_category(socket.assigns.game, category, subject, socket.assigns.player_id)
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
     end
-    {:noreply, socket }
+
+    {:noreply, socket}
   end
-  
+
   def handle_event("next_turn", _params, socket) do
     if Game.next_turn(socket.assigns.game, socket.assigns.player_id) == :ok do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
     end
-    {:noreply, socket }
+
+    {:noreply, socket}
   end
 
   def handle_event("reveal", _params, socket) do
@@ -217,6 +276,7 @@ defmodule FakeartistWeb.GameLive.Play do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
     end
+
     {:noreply, socket}
   end
 
@@ -225,9 +285,9 @@ defmodule FakeartistWeb.GameLive.Play do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
     end
+
     {:noreply, socket}
   end
-
 
   def handle_event("chat_input_changed", %{"chat_input" => input}, socket) do
     {:noreply, socket |> assign(:chat_input, input)}
@@ -235,11 +295,13 @@ defmodule FakeartistWeb.GameLive.Play do
 
   def handle_event("send_message", %{"chat_input" => %{"message" => message}}, socket) do
     message = String.trim(message)
+
     if message != "" do
       message = %{from: Player.name(socket.assigns.player), message: message}
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_message", message)
       send(self(), %{event: "new_message", payload: message})
     end
+
     {:noreply, socket |> assign(:chat_input, %{"message" => ""})}
   end
 
@@ -252,7 +314,8 @@ defmodule FakeartistWeb.GameLive.Play do
     """
   end
 
-  defp render_state_div(%{can_control: true} = assigns, state) when state in [:ready, :waiting_for_next_game] do
+  defp render_state_div(%{can_control: true} = assigns, state)
+       when state in [:ready, :waiting_for_next_game] do
     ~L"""
       <button phx-click="start_game">Start Game</button>
     """
@@ -273,7 +336,7 @@ defmodule FakeartistWeb.GameLive.Play do
   end
 
   defp render_state_div(%{current_player: current_player, player: player} = assigns, :drawing)
-  when current_player == player  do
+       when current_player == player do
     ~L"""
     <div class="rounded-box">Please draw and click Next when you are finished</div>
     <button phx-click="next_turn">Next</button>
@@ -304,8 +367,8 @@ defmodule FakeartistWeb.GameLive.Play do
     other_state
   end
 
-
-  defp render_stats_div(assigns, state) when state in [:drawing, :voting, :waiting_for_next_game] do
+  defp render_stats_div(assigns, state)
+       when state in [:drawing, :voting, :waiting_for_next_game] do
     ~L"""
     <div class="rounded-box">
       <b>Category:</b> <%= @category %><br />
@@ -329,7 +392,7 @@ defmodule FakeartistWeb.GameLive.Play do
   defp render_config_div(_assigns, _other_state), do: ""
 
   # question master
-  defp render_config_div_helper(assigns, true) do 
+  defp render_config_div_helper(assigns, true) do
     ~L"""
     <div class="rounded-box">
       <h3>Game Settings</h3>
@@ -352,7 +415,7 @@ defmodule FakeartistWeb.GameLive.Play do
   end
 
   # regular player
-  defp render_config_div_helper(assigns, false) do 
+  defp render_config_div_helper(assigns, false) do
     ~L"""
     <div class="rounded-box">
       <h3>Game Settings</h3>
@@ -372,7 +435,6 @@ defmodule FakeartistWeb.GameLive.Play do
     """
   end
 
-
   defp render_voting_div(assigns, state) when state in [:voting] do
     ~L"""
     <div class="rounded-box">
@@ -391,8 +453,6 @@ defmodule FakeartistWeb.GameLive.Play do
 
   defp render_voting_div(_assigns, _other_state), do: ""
 
-
-
   #
   # changeset helpers
   #
@@ -410,4 +470,3 @@ defmodule FakeartistWeb.GameLive.Play do
     |> Ecto.Changeset.cast(params, Map.keys(types))
   end
 end
-  

@@ -28,7 +28,9 @@ defmodule FakeartistWeb.Router do
 
   defp put_user_token(conn, _) do
     if current_user = conn.assigns[:current_user] do
-      token = Phoenix.Token.sign(conn, "user socket", %{id: current_user.id, name: current_user.name})
+      token =
+        Phoenix.Token.sign(conn, "user socket", %{id: current_user.id, name: current_user.name})
+
       assign(conn, :user_token, token)
     else
       conn
@@ -39,6 +41,7 @@ defmodule FakeartistWeb.Router do
     case get_session(conn, :username) do
       nil ->
         assign(conn, :current_user, nil)
+
       username ->
         assign(conn, :current_user, %{name: username, id: get_session(conn, :user_id)})
     end

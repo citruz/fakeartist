@@ -72,6 +72,11 @@ defmodule Fakeartist.Player do
   end
 
   def props(player) do
-    %{name: name(player), question_master: question_master?(player), fake_artist: fake?(player), color: color(player)}
+    %{
+      name: name(player),
+      question_master: question_master?(player),
+      fake_artist: fake?(player),
+      color: color(player)
+    }
   end
 end

@@ -18,12 +18,13 @@ defmodule FakeartistWeb.UserSocket do
   @impl true
   def connect(%{"token" => token}, socket, _connect_info) do
     # max_age: 1209600 is equivalent to two weeks in seconds
-    case Phoenix.Token.verify(socket, "user socket", token, max_age: 1209600) do
+    case Phoenix.Token.verify(socket, "user socket", token, max_age: 1_209_600) do
       {:ok, user_data} ->
         {:ok, assign(socket, :current_user, user_data)}
+
       {:error, _reason} ->
         :error
-end
+    end
   end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:

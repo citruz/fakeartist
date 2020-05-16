@@ -14,7 +14,7 @@ defmodule Fakeartist.Rules do
 
   def callback_mode(), do: :state_functions
 
-  def code_change(_vsn, state_name, state_data, _extra) do 
+  def code_change(_vsn, state_name, state_data, _extra) do
     {:ok, state_name, state_data}
   end
 
@@ -40,7 +40,7 @@ defmodule Fakeartist.Rules do
     :gen_statem.call(fsm, :add_player)
   end
 
-  def update_config(fsm, num_rounds, has_question_master) when is_boolean has_question_master do
+  def update_config(fsm, num_rounds, has_question_master) when is_boolean(has_question_master) do
     :gen_statem.call(fsm, {:update_config, num_rounds, has_question_master})
   end
 
@@ -66,21 +66,23 @@ defmodule Fakeartist.Rules do
 
   ## states
 
-  def initialized({:call, from}, :show_current_state, _state_data) do 
+  def initialized({:call, from}, :show_current_state, _state_data) do
     {:keep_state_and_data, {:reply, from, :initialized}}
   end
 
   def initialized({:call, from}, :add_player, state_data) do
     num_players = state_data.num_players + 1
     state_data = Map.put(state_data, :num_players, num_players)
-    if num_players >= Const.wxMIN_PLAYERS do
+
+    if num_players >= Const.wxMIN_PLAYERS() do
       {:next_state, :ready, state_data, {:reply, from, :ok}}
     else
       {:keep_state, state_data, {:reply, from, :ok}}
     end
   end
 
-  def initialized({:call, from}, {:update_config, num_rounds, has_question_master}, state_data) when num_rounds > 0 do
+  def initialized({:call, from}, {:update_config, num_rounds, has_question_master}, state_data)
+      when num_rounds > 0 do
     state_data = Map.put(state_data, :num_rounds, num_rounds)
     state_data = Map.put(state_data, :has_question_master, has_question_master)
     {:keep_state, state_data, {:reply, from, :ok}}
@@ -98,10 +100,8 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-
-
   def ready({:call, from}, :add_player, state_data) do
-    if state_data.num_players == Const.wxMAX_PLAYERS do
+    if state_data.num_players == Const.wxMAX_PLAYERS() do
       # deny adding more players
       {:keep_state_and_data, {:reply, from, :max_players_reached}}
     else
@@ -110,14 +110,17 @@ defmodule Fakeartist.Rules do
     end
   end
 
-  def ready({:call, from}, {:update_config, num_rounds, has_question_master}, state_data) when num_rounds > 0 do
-    state_data = state_data
-    |> Map.put(:num_rounds, num_rounds)
-    |> Map.put(:has_question_master, has_question_master)
+  def ready({:call, from}, {:update_config, num_rounds, has_question_master}, state_data)
+      when num_rounds > 0 do
+    state_data =
+      state_data
+      |> Map.put(:num_rounds, num_rounds)
+      |> Map.put(:has_question_master, has_question_master)
+
     {:keep_state, state_data, {:reply, from, :ok}}
   end
 
-  def ready({:call, from}, :start_game, %Rules{has_question_master: false} = state_data) do 
+  def ready({:call, from}, :start_game, %Rules{has_question_master: false} = state_data) do
     {:next_state, :drawing, state_data, {:reply, from, :ok}}
   end
 
@@ -125,7 +128,7 @@ defmodule Fakeartist.Rules do
     {:next_state, :selecting_category, state_data, {:reply, from, :ok}}
   end
 
-  def ready({:call, from}, :show_current_state, _state_data) do 
+  def ready({:call, from}, :show_current_state, _state_data) do
     {:keep_state_and_data, {:reply, from, :ready}}
   end
 
@@ -141,9 +144,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-
-
-  def selecting_category({:call, from}, :select_category, state_data) do 
+  def selecting_category({:call, from}, :select_category, state_data) do
     {:next_state, :drawing, state_data, {:reply, from, :ok}}
   end
 
@@ -167,30 +168,51 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-
-  def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds, has_question_master: has_question_master} = state_data) 
-  when ((not has_question_master and turn == num_players) or (has_question_master and turn == num_players - 1))
-  and round == num_rounds do
+  def drawing(
+        {:call, from},
+        :next_turn,
+        %Rules{
+          turn: turn,
+          num_players: num_players,
+          round: round,
+          num_rounds: num_rounds,
+          has_question_master: has_question_master
+        } = state_data
+      )
+      when ((not has_question_master and turn == num_players) or
+              (has_question_master and turn == num_players - 1)) and
+             round == num_rounds do
     # reached end
-    IO.puts("reached end: #{inspect state_data}")
+    IO.puts("reached end: #{inspect(state_data)}")
     {:next_state, :voting, state_data, {:reply, from, :ok}}
   end
 
-  def drawing({:call, from}, :next_turn, %Rules{turn: turn, num_players: num_players, round: round, num_rounds: num_rounds, has_question_master: has_question_master} = state_data) 
-  when ((not has_question_master and turn == num_players) or (has_question_master and turn == num_players - 1)) do
+  def drawing(
+        {:call, from},
+        :next_turn,
+        %Rules{
+          turn: turn,
+          num_players: num_players,
+          round: round,
+          num_rounds: num_rounds,
+          has_question_master: has_question_master
+        } = state_data
+      )
+      when (not has_question_master and turn == num_players) or
+             (has_question_master and turn == num_players - 1) do
     # next round
-    IO.puts("next round: #{inspect state_data}")
+    IO.puts("next round: #{inspect(state_data)}")
     state_data = Map.put(state_data, :turn, 1)
     state_data = Map.put(state_data, :round, state_data.round + 1)
-    IO.puts("next round after: #{inspect state_data}")
+    IO.puts("next round after: #{inspect(state_data)}")
     {:keep_state, state_data, {:reply, from, :ok}}
   end
 
   def drawing({:call, from}, :next_turn, state_data) do
     # next turn
-    IO.puts("next turn: #{inspect state_data}")
+    IO.puts("next turn: #{inspect(state_data)}")
     state_data = Map.put(state_data, :turn, state_data.turn + 1)
-    IO.puts("next turn after: #{inspect state_data}")
+    IO.puts("next turn after: #{inspect(state_data)}")
     {:keep_state, state_data, {:reply, from, :ok}}
   end
 
@@ -213,7 +235,6 @@ defmodule Fakeartist.Rules do
   def drawing({:call, from}, _, _state_data) do
     {:keep_state_and_data, {:reply, from, :error}}
   end
-
 
   def voting({:call, from}, :vote, state_data) do
     {:keep_state_and_data, {:reply, from, :ok}}
@@ -239,8 +260,11 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-
-  def waiting_for_next_game({:call, from}, :start_game, %Rules{has_question_master: false} = state_data) do
+  def waiting_for_next_game(
+        {:call, from},
+        :start_game,
+        %Rules{has_question_master: false} = state_data
+      ) do
     state_data = Map.put(state_data, :round, 1)
     state_data = Map.put(state_data, :turn, 1)
     {:next_state, :drawing, state_data, {:reply, from, :ok}}
@@ -268,8 +292,6 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 
-
-
   def game_over({:call, from}, :show_current_state, _state_data) do
     {:keep_state_and_data, {:reply, from, :game_over}}
   end
@@ -289,5 +311,4 @@ defmodule Fakeartist.Rules do
   def game_over({:call, from}, _, _state_data) do
     {:keep_state_and_data, {:reply, from, :error}}
   end
-
 end

@@ -13,7 +13,6 @@ defmodule Fakeartist.Global do
     {:ok, %Global{}}
   end
 
-
   def games do
     GenServer.call(:global, :games)
   end

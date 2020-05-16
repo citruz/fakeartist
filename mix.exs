@@ -45,7 +45,7 @@ defmodule Fakeartist.MixProject do
       {:jason, "~> 1.0"},
       {:distillery, "~> 2.1"},
       {:plug_cowboy, "~> 2.0"},
-      {:elixir_uuid, "~> 1.2" },
+      {:elixir_uuid, "~> 1.2"},
       {:floki, ">= 0.0.0", only: :test}
     ]
   end

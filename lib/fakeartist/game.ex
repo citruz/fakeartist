@@ -215,6 +215,12 @@ defmodule Fakeartist.Game do
     end
   end
 
+  defp get_category_and_subject(%Game{wordlist: wordlist} = state) when wordlist == "none" do
+    state
+    |> Map.put(:category, :none)
+    |> Map.put(:subject, :none)
+  end
+
   defp get_category_and_subject(%Game{wordlist: lang} = state) do
     categories = Map.keys(Const.wxWORDLIST()[lang])
     category = Enum.at(categories, :rand.uniform(length(categories)) - 1)
@@ -270,12 +276,6 @@ defmodule Fakeartist.Game do
       reply ->
         {:reply, {reply, nil}, state}
     end
-  end
-
-  defp get_category_and_subject(%Game{wordlist: wordlist} = state) when wordlist == "none" do
-    state
-    |> Map.put(:category, :none)
-    |> Map.put(:subject, :none)
   end
 
   def handle_call({:update_config, num_rounds, wordlist}, _from, state) do

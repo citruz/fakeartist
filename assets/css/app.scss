@@ -90,49 +90,62 @@
   display: none;
 }
 
+.rounded-box {
+  background: #f1f0f3;
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+
+  form {
+    margin: 0;
+  }
+  select {
+    background-color: white;
+  }
+}
+
+/* start page */
+.startpage {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+
+  .left, .right {
+    flex: 50%;
+  }
+  .left {
+    margin-right: 10px;
+  }
+  .right {
+    margin-left: 10px;
+  }
+
+  p {
+    margin-bottom: 1rem;
+  }
+}
+
+/* game view */
 #game {
   display: flex;
 }
 
 .side {
+  flex: 1 0 200px;
   padding-left: 10px;
-  width: 100%;
 
-  .rounded-box {
-    background: #f1f0f3;
-    padding: 8px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-  }
-
-  .drawing div, .selecting_category div {
+  .drawing div, .selecting_category div, .voting div {
     span {
       display: block;
+      font-weight: bold;
     }
     text-align: center;
     background-color: #ffb474;
   }
 
-  .voting div {
-    text-align: center;
-  }
-
   .next-btn {
     display: block;
     width: 100%;
-  }
-
-  #user-list {
-    li {
-      list-style: none;
-      padding: 8px;
-      border-radius: 5px;
-      background-color: #f1f0f3;
-
-      span {
-        margin-right: 9px;
-      }
-    }
   }
 
   #stats {
@@ -149,17 +162,80 @@
   }
 }
 
+#player-list {
+  flex: 1 0 200px;
+  padding-right: 10px;
+
+  ul {
+    li {
+      list-style: none;
+      padding: 8px;
+      border-radius: 5px;
+      background-color: #f1f0f3;
+
+      span {
+        margin-right: 9px;
+      }
+    }
+  }
+}
+
 #voting {
   li {
     list-style: none;
+    display: flex;
+    line-height: 3rem;
+
+    button {
+      flex: 0 1 auto;
+      padding: 0 1rem;
+      margin: 0 0.5rem 0 0;
+      height: 3rem;
+      line-height: 3rem;
+    }
+    .player-votes {
+      flex: 1 1 auto;
+      text-align: right;
+    }
+  }
+  li:last-child {
+    margin: 0;
+  }
+  li.active {
+    font-weight: bold;
   }
 }
 
 #messages {
-  padding: 10px;
-  p {
-    font-size: 0.8em;
-    margin-bottom: 5px;
+  #message-container {
+    p {
+      span {
+        font-weight: bold;
+      }
+      font-size: 0.8em;
+      padding: 0.3rem 0.5rem;
+      margin: 0;
+    }
+    p:nth-child(odd) {
+      background: #f7f7f7;
+    }
+    height: 250px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+  }
+
+  #chat-input {
+    input[type=text] {
+      margin: 0;
+      width: 75%;
+      background-color: white;
+    }
+    button[type=submit] {
+      margin: 0;
+      padding: 0;
+      width: 22%;
+      margin-left: 3%;
+    }
   }
 }
 

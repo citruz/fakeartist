@@ -18,13 +18,15 @@ window.addEventListener("phx:page-loading-stop", info => NProgress.done())
 let hooks = {
   canvas: {
     mounted() {
-      console.log("canvas mounted")
       canvas = this.el;
       initCanvas()
       connectToGame()
-    },
+    }
+  },
+  chat: {
     updated() { 
-      console.log("canvas updated")
+      let div = this.el
+      div.scrollTop = div.scrollHeight
     }
   }
 };
@@ -95,7 +97,6 @@ function initCanvas() {
     canvasHandler('move', e)
   }, false);
   canvas.addEventListener("touchmove", function (e) {
-    console.log("touchmove")
     canvasHandler('move', e)
   }, false);
 
@@ -103,7 +104,6 @@ function initCanvas() {
     canvasHandler('down', e)
   }, false);
   canvas.addEventListener("touchstart", function (e) {
-    console.log("touchdown")
     canvasHandler('down', e)
   }, false);
 
@@ -111,7 +111,6 @@ function initCanvas() {
     canvasHandler('up', e)
   }, false);
   canvas.addEventListener("touchend", function (e) {
-    console.log("touchend")
     canvasHandler('up', e)
   }, false);
 
@@ -148,7 +147,7 @@ function draw(fromX, fromY, toX, toY, color, thickness) {
     // draw dot
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.fillRect(currX, currY, 2, 2);
+    ctx.fillRect(fromX, toY, 2, 2);
     ctx.closePath();
   } else {
     // draw line
@@ -190,7 +189,7 @@ function canvasHandler(res, e) {
     currX = e.layerX - canvas.offsetLeft
     currY = e.layerY - canvas.offsetTop
   }
-  console.log(`curx: ${currX} cury: ${currY}`)
+  //console.log(`curx: ${currX} cury: ${currY}`)
   if (res == 'down') {
     mouseDown = true;
     sendDraw(currX, currY, currX, currY);

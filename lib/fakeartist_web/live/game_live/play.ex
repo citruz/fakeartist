@@ -30,8 +30,9 @@ defmodule FakeartistWeb.GameLive.Play do
           if socket.root_pid != nil do
             # since mount is called twice when you load the page, we check for root pid which
             # is only set the second time
-            Endpoint.broadcast_from(self(), topic, "new_player", %{name: username})
+            Endpoint.broadcast_from(self(), topic, "new_player", %{name: username, color: Player.color(player)})
           end
+          # set initial values
           socket = socket
           |> assign(:topic, topic)
           |> assign(:token, game_token)
@@ -43,6 +44,7 @@ defmodule FakeartistWeb.GameLive.Play do
           |> assign(:category_changeset, category_changeset(%{}))
           |> assign(:min_players, Const.wxMIN_PLAYERS)
           |> assign(:messages, [])
+          |> assign(:chat_input, %{"message" => "asdasd"})
           |> update_game_state
           {:ok, socket}
         {err, _} ->
@@ -95,17 +97,21 @@ defmodule FakeartistWeb.GameLive.Play do
     |> assign(:num_players, length(players))
     |> assign(:state, Game.get_state(game))
     |> assign(:current_player, Game.get_current_player(game))
+    |> assign(:can_control, Game.can_control?(game, socket.assigns.player_id))
     |> assign(:category, Game.get_category(game))
     |> assign(:subject, Game.get_subject(game, socket.assigns.player_id))
     |> assign(:round, Game.get_round(game))
     |> assign(:num_rounds, Game.get_num_rounds(game))
     |> assign(:fake_player_name, fake_player_name(game))
+    |> assign(:controller_name, Player.name(Game.controller(game)))
+    |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
     |> assign(:config_changeset, config_changeset(%{"num_rounds" => Game.get_num_rounds(game), "wordlist" => Game.get_wordlist(game)}))
 
-    #IO.puts("update_game_state:")
-    #IO.puts("game: #{inspect Game.props(game)}")
-    #IO.puts("players: #{inspect socket.assigns.players}")
-    #IO.puts("current_player: #{inspect socket.assigns.current_player}")
+    # IO.puts("update_game_state:")
+    # IO.puts("game: #{inspect Game.props(game)}")
+    # IO.puts("players: #{inspect socket.assigns.players}")
+    # IO.puts("current_player: #{inspect socket.assigns.current_player}")
+    # IO.puts("messages: #{inspect socket.assigns.messages}")
     socket
   end
 
@@ -115,9 +121,10 @@ defmodule FakeartistWeb.GameLive.Play do
   #
 
   @impl true
-  def handle_info(%{event: "new_player", payload: %{name: player_name}}, socket) do
+  def handle_info(%{event: "new_player", payload: %{name: player_name, color: color}}, socket) do
+    IO.puts("new player")
     socket = socket
-    |> assign(:messages, socket.assigns.messages ++ [{Time.utc_now(), player_name <> " joined"}])
+    |> assign(:messages, socket.assigns.messages ++ [{:join, color, player_name}])
     |> update_game_state
     {:noreply, socket}
   end
@@ -128,7 +135,14 @@ defmodule FakeartistWeb.GameLive.Play do
     {:noreply, socket}
   end
 
-  def handle_info(_, socket) do
+  def handle_info(%{event: "new_message", payload: %{from: player_name, message: message}}, socket) do
+    socket = socket
+    |> assign(:messages, socket.assigns.messages ++ [{:message, player_name, message}])
+    {:noreply, socket}
+  end
+
+  def handle_info(event, socket) do
+    IO.puts("unhandled info: #{inspect event}")
     {:noreply, socket}
   end
 
@@ -139,8 +153,6 @@ defmodule FakeartistWeb.GameLive.Play do
   @impl true
   def handle_event("start_game", _params, socket) do
     if Game.start_game(socket.assigns.game, socket.assigns.player_id) == :ok do
-      #TODO move into game
-      Enum.each(Game.get_players(socket.assigns.game), fn p -> Player.reset_vote(p) end)
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
 
@@ -209,11 +221,26 @@ defmodule FakeartistWeb.GameLive.Play do
   end
 
   def handle_event("vote", %{"player-id" => player_id}, socket) do
-    # TODO move into game
-    Player.vote_for(socket.assigns.player, player_id)
-    Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
-    send(self(), %{event: "new_state"})
+    if Game.vote(socket.assigns.game, socket.assigns.player_id, player_id) == :ok do
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+      send(self(), %{event: "new_state"})
+    end
     {:noreply, socket}
+  end
+
+
+  def handle_event("chat_input_changed", %{"chat_input" => input}, socket) do
+    {:noreply, socket |> assign(:chat_input, input)}
+  end
+
+  def handle_event("send_message", %{"chat_input" => %{"message" => message}}, socket) do
+    message = String.trim(message)
+    if message != "" do
+      message = %{from: Player.name(socket.assigns.player), message: message}
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_message", message)
+      send(self(), %{event: "new_message", payload: message})
+    end
+    {:noreply, socket |> assign(:chat_input, %{"message" => ""})}
   end
 
   #
@@ -225,30 +252,24 @@ defmodule FakeartistWeb.GameLive.Play do
     """
   end
 
+  defp render_state_div(%{can_control: true} = assigns, state) when state in [:ready, :waiting_for_next_game] do
+    ~L"""
+      <button phx-click="start_game">Start Game</button>
+    """
+  end
+
   defp render_state_div(assigns, state) when state in [:ready, :waiting_for_next_game] do
-    if Player.question_master?(assigns.player) do
-      ~L"""
-        <button phx-click="start_game">Start Game</button>
-      """
-    else
-      ~L"""
-      <div class="rounded-box">Waiting for Question Master to start the game</div>
-      """
-    end
+    ~L"""
+    <div class="rounded-box">Waiting for <%= @controller_name %> to start the game</div>
+    """
   end
 
   defp render_state_div(assigns, :selecting_category) do
-    # TODO use pattern matching
-    qm = Game.get_question_master(assigns.game)
-    if qm != nil do
-      ~L"""
-      <div class="rounded-box">
-        <span><%= Player.name(qm) %></span> is selecting a category
-      </div>
-      """
-    else 
-      ""
-    end
+    ~L"""
+    <div class="rounded-box">
+      <span><%= Player.name(Game.get_question_master(assigns.game)) %></span> is selecting a category
+    </div>
+    """
   end
 
   defp render_state_div(%{current_player: current_player, player: player} = assigns, :drawing)
@@ -265,21 +286,21 @@ defmodule FakeartistWeb.GameLive.Play do
     """
   end
 
-  defp render_state_div(assigns, :voting) do
-    if Player.question_master?(assigns.player) do
-      ~L"""
-        <div class="rounded-box">Voting</div>
-        <button phx-click="reveal">Reveal</button>
-      """
-    else
-      ~L"""
+  defp render_state_div(%{can_control: true} = assigns, :voting) do
+    ~L"""
       <div class="rounded-box">Voting</div>
-      """
-    end
+      <button phx-click="reveal">Reveal</button>
+    """
   end
 
+  defp render_state_div(assigns, :voting) do
+    ~L"""
+      <div class="rounded-box">Voting</div>
+    """
+  end
 
-  defp render_state_div(_assigns, other_state) do
+  defp render_state_div(assigns, other_state) do
+    IO.inspect(assigns)
     other_state
   end
 
@@ -325,6 +346,7 @@ defmodule FakeartistWeb.GameLive.Play do
           <%= label f, :wordlist %>
           <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"] %>
         </div>
+      </form>
     </div>
     """
   end
@@ -345,6 +367,7 @@ defmodule FakeartistWeb.GameLive.Play do
           <%= label f, :wordlist %>
           <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"], disabled: true  %>
         </div>
+      </form>
     </div>
     """
   end
@@ -355,10 +378,10 @@ defmodule FakeartistWeb.GameLive.Play do
     <div class="rounded-box">
       <%= for player <- @players do %>
         <%= if not player.question_master? do %>
-        <li>
-          <%= player.name %>
-          <%= player.votes %>
+        <li class="<%= if player.id == @my_vote do "active" end %>">
           <button phx-click="vote" phx-value-player-id="<%= player.id %>">Vote</button>
+          <div class="player-name"><%= player.name %></div>
+          <div class="player-votes"><%= player.votes %></div>
         </li>
         <% end %>
       <% end %>

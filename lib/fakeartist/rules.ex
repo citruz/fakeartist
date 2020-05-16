@@ -215,6 +215,10 @@ defmodule Fakeartist.Rules do
     end
 
 
+    def voting({:call, from}, :vote, state_data) do
+        {:keep_state_and_data, {:reply, from, :ok}}
+    end
+
     def voting({:call, from}, :reveal, state_data) do
         {:next_state, :waiting_for_next_game, state_data, {:reply, from, :ok}}
     end
@@ -231,11 +235,16 @@ defmodule Fakeartist.Rules do
         {:keep_state_and_data, {:reply, from, :game_already_started}}
     end
 
-
     def voting({:call, from}, _, _state_data) do
         {:keep_state_and_data, {:reply, from, :error}}
     end
 
+
+    def waiting_for_next_game({:call, from}, :start_game, %Rules{has_question_master: false} = state_data) do
+        state_data = Map.put(state_data, :round, 1)
+        state_data = Map.put(state_data, :turn, 1)
+        {:next_state, :drawing, state_data, {:reply, from, :ok}}
+    end
 
     def waiting_for_next_game({:call, from}, :start_game, state_data) do
         state_data = Map.put(state_data, :round, 1)

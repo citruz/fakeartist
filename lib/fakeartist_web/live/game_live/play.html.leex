@@ -23,10 +23,23 @@
           <%= text_input f, :subject %>
         </div>
     <%= submit "Submit", phx_disable_with: "Please wait...", disabled: not @category_submit_enabled %>
+    </form>
   </div>
 </div>
 <% end %>
 <div id="game" data-token="<%= @token %>">
+  <div id="player-list">
+    <ul>
+      <%= for player <- @players do %>
+      <li>
+        <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
+        <%= player.name %>
+        <%= if player.question_master? do %>&nbsp;&nbsp;👑<% end %>
+        <%= if player.current_player? do %>&nbsp;&nbsp;✏️<% end %>
+      </li>
+      <% end %>
+    </ul>
+  </div>
   <div class="draw">
     <canvas id="can" width="500" height="600" phx-hook="canvas"></canvas>
     <%#
@@ -43,6 +56,9 @@
     %>
   </div>
   <div class="side">
+    <div id="config">
+    <%= render_config_div(assigns, @state) %>
+    </div>
     <div class="state <%= @state %>">
     <%= render_state_div(assigns, @state) %>
     </div>
@@ -50,25 +66,28 @@
     <%= render_voting_div(assigns, @state) %>
     </div>
     <div id="stats">
-    <%= render_config_div(assigns, @state) %>
-    </div>
-    <div id="stats">
     <%= render_stats_div(assigns, @state) %>
     </div>
-    <ul id="user-list">
-      <%= for player <- @players do %>
-      <li>
-        <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
-        <%= player.name %>
-        <%= if player.question_master? do %>&nbsp;&nbsp;👑<% end %>
-        <%= if player.current_player? do %>&nbsp;&nbsp;✏️<% end %>
-      </li>
+    <div id="messages" class="rounded-box">
+      <div id="message-container" phx-hook="chat">
+      <%= for message <- @messages do %>
+        <%= case message do %>
+          <% {:join, color, player} -> %>
+            <p><span style="color:<%= color %>"><%= player %> joined</span></p>
+          <% {:message, player, text} -> %>
+            <p><span><%= player %> </span><%= text %></p>
+        <% end %>
       <% end %>
-    </ul>
-    <div id="messages">
-    <%= for {time, message} <- @messages do %>
-      <p><span><%= Time.to_iso8601(time) %></span> <%= message %></p>
-    <% end %>
+      </div>
+      <div id="message-input">
+      <%= f = form_for :chat_input, "#",
+        id: "chat-input",
+        phx_submit: "send_message",
+        phx_change: "chat_input_changed" %>
+        <%= text_input f, :message %>
+        <%= submit "Send" %>
+        </form>
+      </div>
     </div>
   </div>
 </div>

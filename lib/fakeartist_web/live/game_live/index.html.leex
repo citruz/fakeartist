@@ -1,39 +1,46 @@
-<h2>Create Game</h2>
+<div class="startpage">
+  <div class="left">
+    <h2>Create Private Game</h2>
 
-<%= form_for :user, Routes.session_path(@socket, :create), [method: :post, as: :user], fn f -> %>
-<div class="form-group">
-  <%= text_input f, :username, placeholder: "Username", value: @username %>
-</div>
-<div class="form-group">
-  <%= submit "Create" %>
-</div>
-<% end %>
-
-<h2>Join Game</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th># players</th>
-      <th>State</th>
-
-      <th></th>
-    </tr>
-  </thead>
-  <tbody id="games">
-    <%= for game <- @games do %>
-      <tr id="game-<%= game.token %>">
-        <td><%= game.token %></td>
-        <td><%= game.num_players %></td>
-        <td><%= game.state %></td>
-
-        <td>
-        <%= if game.state in [:initialized, :ready] do %>
-          <span><%= live_redirect "Join", to: Routes.game_join_path(@socket, :join, game.token) %></span>
-        <% end %>
-        </td>
-      </tr>
+    <%= form_for :user, Routes.session_path(@socket, :create), [method: :post, as: :user], fn f -> %>
+    <div class="form-group">
+      <%= text_input f, :username, placeholder: "Username", value: @username %>
+    </div>
+    <div class="form-group">
+      <%= submit "Create" %>
+    </div>
     <% end %>
-  </tbody>
-</table>
+
+    <h2>Join Game</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th># players</th>
+          <th>State</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="games">
+        <%= for game <- @games do %>
+          <%= if game.state in [:initialized, :ready] do %>
+          <tr id="game-<%= game.token %>">
+            <td><%= game.num_players %></td>
+
+            <td>
+              <span><%= live_redirect "Join", to: Routes.game_join_path(@socket, :join, game.token) %></span>
+            </td>
+          </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <div class="right">
+    <h2>How To Play</h2>
+    <p>At the beginning of each game the <i>Question Master</i> chooses a category (e.g. Animals) and a subject (e.g. cat).</p>
+    <p>The <i>Fake Artist</i> is choosen randomly each game, but only he himself knows that it is him. All players see the category but the subject is hidden from the <i>Fake Artist</i>.</p>
+    <p>Now, the players take turns and each artist draws one mark to create the masterpiece. The <i>Fake Artist</i> needs to guess what the subject is and the other players must be careful not to reveal the subject too quickly.</p>
+    <p>After two rounds the players vote for who they believe the <i>Fake Artist</i> is.</p> 
+  </div>
+</div>

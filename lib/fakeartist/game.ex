@@ -49,6 +49,26 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, {:get_player, id})
     end
 
+    def creator?(pid, player) do
+        Game.get_player_idx(pid, player) == 0
+    end
+
+    def get_creator(pid) do
+        GenServer.call(pid, :get_creator)
+    end
+
+    def can_control?(pid, player) do
+        (Game.has_question_master?(pid) and Game.is_question_master?(pid, player)) or Game.creator?(pid, player)
+    end
+
+    def controller(pid) do
+        if Game.has_question_master?(pid) do
+            Game.get_question_master(pid)
+        else
+            Game.get_creator(pid)
+        end
+    end
+
     def get_player_idx(pid, id) do
         Game.get_players(pid) |> Enum.find_index(fn p -> Player.id(p) == id end)
     end
@@ -71,7 +91,7 @@ defmodule Fakeartist.Game do
     end
 
     def start_game(pid, player) do
-        if Game.is_question_master?(pid, player) do
+        if Game.can_control?(pid, player) do
             GenServer.call(pid, :start_game)
         else
             :error
@@ -79,7 +99,7 @@ defmodule Fakeartist.Game do
     end
 
     def reveal(pid, player) do
-        if Game.is_question_master?(pid, player) do
+        if Game.can_control?(pid, player) do
             GenServer.call(pid, :reveal)
         else
             :error
@@ -97,6 +117,10 @@ defmodule Fakeartist.Game do
 
     def get_question_master(pid) do
         GenServer.call(pid, :get_question_master)
+    end
+
+    def has_question_master?(pid) do
+        GenServer.call(pid, :has_question_master)
     end
 
     def get_state(pid) do
@@ -141,6 +165,10 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, {:next_turn, player})
     end
 
+    def vote(pid, voter, votee) do
+        GenServer.call(pid, {:vote, voter, votee})
+    end
+
     #
     # helpers
     #
@@ -177,6 +205,10 @@ defmodule Fakeartist.Game do
         end
         )
         {:reply, player, state}
+    end
+
+    def handle_call(:get_creator, _from, state) do
+        {:reply, Enum.at(state.players, 0), state}
     end
 
     def handle_call(:props, _from, state) do
@@ -228,7 +260,6 @@ defmodule Fakeartist.Game do
                 state = state
                 |> Map.put(:wordlist, wordlist)
                 |> Map.put(:num_rounds, num_rounds)
-                |> get_category_and_subject
                 {:reply, :ok, state}
             reply ->
                 {:reply, reply, state}
@@ -279,6 +310,11 @@ defmodule Fakeartist.Game do
                 |> Map.put(:i_current_player, i_cur_player)
                 |> Map.put(:i_fake, i_fake)
                 |> update_players
+                |> get_category_and_subject
+
+                # reset player votes
+                Enum.each(state.players, fn p -> Player.reset_vote(p) end)
+
                 {:reply, :ok, state}
             reply ->
                 {:reply, reply, state}
@@ -308,6 +344,10 @@ defmodule Fakeartist.Game do
     def handle_call(:get_question_master, _from, state) do
         player = Enum.find(state.players, fn player -> Player.question_master?(player) end)
         {:reply, player, state}
+    end
+
+    def handle_call(:has_question_master, _from, state) do
+        {:reply, state.wordlist == "none", state}
     end
 
     def handle_call(:get_state, _from, state) do
@@ -362,17 +402,34 @@ defmodule Fakeartist.Game do
 
         if player_idx == state.i_current_player do
             case Rules.next_turn(state.fsm) do
-                :ok ->
-                    state = state 
-                    |> Map.put(:i_current_player, get_next_player(state))
-                    |> update_players
-                    {:reply, :ok, state}
-                reply ->
-                    {:reply, reply, state}
+            :ok ->
+                state = state 
+                |> Map.put(:i_current_player, get_next_player(state))
+                |> update_players
+                {:reply, :ok, state}
+            reply ->
+                {:reply, reply, state}
             end
         else
             {:reply, :error, state}
         end
     end
+
+    def handle_call({:vote, voter, votee}, _from, state) do
+        voter_pid = Enum.find(state.players, fn p -> Player.id(p) == voter end)
+        votee_pid = Enum.find(state.players, fn p -> Player.id(p) == votee end)
+
+        if voter_pid != nil and votee_pid != nil do
+            case Rules.vote(state.fsm) do
+            :ok ->
+                Player.vote_for(voter_pid, votee)
+                {:reply, :ok, state}
+            reply ->
+                {:reply, reply, state}
+            end
+        else
+            {:reply, :unknown_player, state}
+        end
+    end 
 
 end

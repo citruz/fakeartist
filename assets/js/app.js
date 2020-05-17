@@ -176,15 +176,29 @@ function clear() {
   ctx.clearRect(0, 0, w, h);
 }
 
+function recursiveOffsetLeftAndTop(element) {
+  var offsetLeft = 0;
+  var offsetTop = 0;
+  while (element) {
+      offsetLeft += element.offsetLeft;
+      offsetTop += element.offsetTop;
+      element = element.offsetParent;
+  }
+  return {
+      offsetLeft: offsetLeft,
+      offsetTop: offsetTop
+  };
+};
+
 function canvasHandler(res, e) {
   e.preventDefault();
   prevX = currX;
   prevY = currY;
 
   if (window.TouchEvent && e instanceof TouchEvent && e.touches[0]) {
-    let rect = canvas.getBoundingClientRect();
-    currX = e.touches[0].pageX - rect.left
-    currY = e.touches[0].pageY - rect.top
+    let offsets = recursiveOffsetLeftAndTop(canvas);
+    currX = e.touches[0].pageX - offsets.offsetLeft
+    currY = e.touches[0].pageY - offsets.offsetTop
   } else {
     currX = e.layerX - canvas.offsetLeft
     currY = e.layerY - canvas.offsetTop

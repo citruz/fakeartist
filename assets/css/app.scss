@@ -104,20 +104,26 @@
   }
 }
 
+$breakpoint-phone: 600px;
+
 /* start page */
 .startpage {
   max-width: 80rem;
   margin: 0 auto;
-  display: flex;
 
-  .left, .right {
-    flex: 50%;
-  }
-  .left {
-    margin-right: 10px;
-  }
-  .right {
-    margin-left: 10px;
+  @media (min-width: $breakpoint-phone) {
+    & {
+      display: flex;
+    }
+    .left, .right {
+      flex: 50%;
+    }
+    .left {
+      margin-right: 10px;
+    }
+    .right {
+      margin-left: 10px;
+    }
   }
 
   p {
@@ -126,14 +132,21 @@
 }
 
 /* game view */
-#game {
-  display: flex;
+@media (min-width: $breakpoint-phone) {
+  #game {
+    display: flex;
+  }
+  .side {
+    flex: 1 0 200px;
+    padding-left: 10px;
+  }
+  #player-list {
+    flex: 1 0 200px;
+    padding-right: 10px;
+  }
 }
 
 .side {
-  flex: 1 0 200px;
-  padding-left: 10px;
-
   .drawing div, .selecting_category div, .voting div {
     span {
       display: block;
@@ -163,9 +176,6 @@
 }
 
 #player-list {
-  flex: 1 0 200px;
-  padding-right: 10px;
-
   ul {
     li {
       list-style: none;
@@ -245,8 +255,8 @@
   position: relative;
 
   canvas {
-    width: 100%;
-    height: 100%;
+    width: 500px;
+    height: 600px;
     border: 2px solid black;
   }
 

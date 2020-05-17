@@ -33,6 +33,20 @@ defmodule Fakeartist.Const do
           "BäckerIn",
           "LehrerIn",
           "MalerIn"
+        ],
+        "TV" => [
+          "Titanic",
+          "Spiderman",
+          "König der Löwen",
+          "Star Wars",
+          "Harry Potter",
+          "Ironman",
+          "James Bond",
+          "Herr der Ringe",
+          "Findet Nemo",
+          "Fight Club",
+          "Mission Impossible",
+          "Game of Thrones"
         ]
       },
       "eng" => %{
@@ -40,6 +54,20 @@ defmodule Fakeartist.Const do
           "Baker",
           "Teacher",
           "Artist"
+        ],
+        "TV" => [
+          "Titanic",
+          "Spiderman",
+          "The Lion King",
+          "Star Wars",
+          "Harry Potter",
+          "Ironman",
+          "James Bond",
+          "Lord of the Rings",
+          "Finding Nemo",
+          "Fight Club",
+          "Mission Impossible",
+          "Game of Thrones"
         ]
       }
     }

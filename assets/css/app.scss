@@ -35,7 +35,7 @@
   height: 100%;
   overflow: auto;
   background-color: rgb(0,0,0);
-  background-color: rgba(0,0,0,0.4);
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
 .phx-modal-content {
@@ -190,32 +190,6 @@ $breakpoint-phone: 600px;
   }
 }
 
-#voting {
-  li {
-    list-style: none;
-    display: flex;
-    line-height: 3rem;
-
-    button {
-      flex: 0 1 auto;
-      padding: 0 1rem;
-      margin: 0 0.5rem 0 0;
-      height: 3rem;
-      line-height: 3rem;
-    }
-    .player-votes {
-      flex: 1 1 auto;
-      text-align: right;
-    }
-  }
-  li:last-child {
-    margin: 0;
-  }
-  li.active {
-    font-weight: bold;
-  }
-}
-
 #messages {
   #message-container {
     p {
@@ -286,4 +260,86 @@ $breakpoint-phone: 600px;
 #send-link {
   margin-top: 10px;
   font-size: 0.9em;
+}
+
+#vote-modal {
+  button.active, button.correct {
+    background-color: green;
+  }
+  button.incorrect {
+    background-color: rgb(155, 0, 0);
+    border-color: rgb(105, 1, 1);
+  }
+
+  .player-overview {
+    text-align: center;
+    span {
+      display: inline-block;
+      height: 4rem;
+      width: 4rem;
+      border-radius: 2rem;
+      line-height: 4rem;
+      text-align: center;
+      background: #eee;
+      border: 2px solid #ccc;
+      position: relative;
+      margin: 0 1rem;
+    }
+    span:after, span:before {
+      border-radius: 50%;
+      height: 2rem;
+      width: 2rem;
+      position: absolute;
+      top: -0.7rem;
+      right: -0.7rem;
+      display: inline-block;
+      font-size: 1.3rem;
+      line-height: 2rem;
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    span.active:after {
+      content: '✔';
+      background: #53b953;
+      color: white;
+    }
+
+    span.waiting:before {
+      content: ' ';
+      font-size: 1rem;
+      position: absolute;
+      top: -0.7rem;
+      right: -0.7rem;
+      border-top: 0.3em solid #bbb;
+      border-right: 0.3em solid #bbb;
+      border-bottom: 0.3em solid #bbb;
+      border-left: 0.3em solid #000000;
+      -webkit-transform: translateZ(0);
+      -ms-transform: translateZ(0);
+      transform: translateZ(0);
+      -webkit-animation: load8 1.5s infinite linear;
+      animation: load8 1.5s infinite linear;
+    }
+    @-webkit-keyframes load8 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+    @keyframes load8 {
+      0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+    
+  }
 }

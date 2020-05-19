@@ -12,6 +12,7 @@ defmodule Fakeartist.Game do
     i_current_player: :none,
     i_question_master: :none,
     i_fake: :none,
+    guess_correct: :none,
     wordlist: Const.wxDEFAULT_WORDLIST()
   )
 
@@ -58,7 +59,7 @@ defmodule Fakeartist.Game do
 
   def can_control?(pid, player) do
     (Game.has_question_master?(pid) and Game.is_question_master?(pid, player)) or
-      Game.creator?(pid, player)
+      (not Game.has_question_master?(pid) and Game.creator?(pid, player))
   end
 
   def controller(pid) do
@@ -171,6 +172,18 @@ defmodule Fakeartist.Game do
     GenServer.call(pid, {:vote, voter, votee})
   end
 
+  def set_guess_correct(pid, player, bool) do
+    if Game.can_control?(pid, player) do
+      GenServer.call(pid, {:set_guess_correct, bool})
+    else
+      :not_allowed
+    end
+  end
+
+  def get_guess_correct(pid) do
+    GenServer.call(pid, :get_guess_correct)
+  end
+
   #
   # helpers
   #
@@ -230,6 +243,22 @@ defmodule Fakeartist.Game do
     state
     |> Map.put(:category, category)
     |> Map.put(:subject, subject)
+  end
+
+  defp check_votes_complete(state) do
+    # all artists must have voted
+    votes_complete =
+      Enum.all?(state.players, fn p ->
+        Player.question_master?(p) or Player.voted_for?(p) != :none
+      end)
+
+    # the controller must have decided if the fake artist was correct
+    if votes_complete and state.guess_correct != :none do
+      # -> reveal
+      Rules.reveal(state.fsm)
+    end
+
+    state
   end
 
   #
@@ -328,6 +357,7 @@ defmodule Fakeartist.Game do
           |> Map.put(:i_question_master, i_qm)
           |> Map.put(:i_current_player, i_cur_player)
           |> Map.put(:i_fake, i_fake)
+          |> Map.put(:guess_correct, :none)
           |> update_players
           |> get_category_and_subject
 
@@ -446,11 +476,12 @@ defmodule Fakeartist.Game do
     voter_pid = Enum.find(state.players, fn p -> Player.id(p) == voter end)
     votee_pid = Enum.find(state.players, fn p -> Player.id(p) == votee end)
 
-    if voter_pid != nil and votee_pid != nil do
+    # question master cannot vote
+    if voter_pid != nil and votee_pid != nil and not Player.question_master?(voter_pid) do
       case Rules.vote(state.fsm) do
         :ok ->
           Player.vote_for(voter_pid, votee)
-          {:reply, :ok, state}
+          {:reply, :ok, state |> check_votes_complete()}
 
         reply ->
           {:reply, reply, state}
@@ -458,5 +489,20 @@ defmodule Fakeartist.Game do
     else
       {:reply, :unknown_player, state}
     end
+  end
+
+  def handle_call({:set_guess_correct, bool}, _from, state) when is_boolean(bool) do
+    # for now we handle this is a vote
+    case Rules.vote(state.fsm) do
+      :ok ->
+        {:reply, :ok, state |> Map.put(:guess_correct, bool) |> check_votes_complete()}
+
+      reply ->
+        {:reply, reply, state}
+    end
+  end
+
+  def handle_call(:get_guess_correct, _from, state) do
+    {:reply, state.guess_correct, state}
   end
 end

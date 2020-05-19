@@ -3,6 +3,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
   alias Fakeartist.{Game, Global, Player, Const}
   alias FakeartistWeb.Endpoint
+  alias FakeartistWeb.GameLive.VoteModal
 
   defmodule CategoryInput do
     defstruct category: "", subject: ""
@@ -93,8 +94,6 @@ defmodule FakeartistWeb.GameLive.Play do
     players = Game.get_players(game)
 
     Enum.map(players, fn p ->
-      votes = Enum.count(players, fn p2 -> Player.voted_for?(p2) == Player.id(p) end)
-
       %{
         name: Player.name(p),
         id: Player.id(p),
@@ -102,7 +101,8 @@ defmodule FakeartistWeb.GameLive.Play do
         fake?: Player.fake?(p),
         question_master?: Player.question_master?(p),
         current_player?: Player.current_player?(p),
-        votes: votes
+        can_control?: Game.can_control?(game, Player.id(p)),
+        voted_for: Player.voted_for?(p)
       }
     end)
   end
@@ -125,6 +125,7 @@ defmodule FakeartistWeb.GameLive.Play do
       |> assign(:fake_player_name, fake_player_name(game))
       |> assign(:controller_name, Player.name(Game.controller(game)))
       |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
+      |> assign(:guess_correct, Game.get_guess_correct(game))
       |> assign(
         :config_changeset,
         config_changeset(%{
@@ -273,6 +274,24 @@ defmodule FakeartistWeb.GameLive.Play do
 
   def handle_event("reveal", _params, socket) do
     if Game.reveal(socket.assigns.game, socket.assigns.player_id) == :ok do
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+      send(self(), %{event: "new_state"})
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("guess_correct", _params, socket) do
+    if Game.set_guess_correct(socket.assigns.game, socket.assigns.player_id, true) == :ok do
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+      send(self(), %{event: "new_state"})
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("guess_incorrect", _params, socket) do
+    if Game.set_guess_correct(socket.assigns.game, socket.assigns.player_id, false) == :ok do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
       send(self(), %{event: "new_state"})
     end
@@ -434,24 +453,6 @@ defmodule FakeartistWeb.GameLive.Play do
     </div>
     """
   end
-
-  defp render_voting_div(assigns, state) when state in [:voting] do
-    ~L"""
-    <div class="rounded-box">
-      <%= for player <- @players do %>
-        <%= if not player.question_master? do %>
-        <li class="<%= if player.id == @my_vote do "active" end %>">
-          <button phx-click="vote" phx-value-player-id="<%= player.id %>">Vote</button>
-          <div class="player-name"><%= player.name %></div>
-          <div class="player-votes"><%= player.votes %></div>
-        </li>
-        <% end %>
-      <% end %>
-    </div>
-    """
-  end
-
-  defp render_voting_div(_assigns, _other_state), do: ""
 
   #
   # changeset helpers

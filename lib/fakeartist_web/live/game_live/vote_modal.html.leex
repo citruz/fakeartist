@@ -1,0 +1,33 @@
+<div class="phx-modal" id="vote-modal">
+  <div class="phx-modal-content">
+    <%= if @myself.question_master? or @myself.can_control? do %>
+    <p>Please decide if the fake artist guessed correctly:</p>
+    <blockquote>
+      "Humbug"
+    </blockquote>
+    <p>Is this correct?</p>
+    <p>
+      <button class="<%= if @guess_correct == true do "correct" end%>" phx-click="guess_correct">Yes 👍</button>
+      <button class="<%= if @guess_correct == false do "incorrect" end%>" phx-click="guess_incorrect">No 👎</button>
+    </p>
+    <% end %>
+
+    <%= if not @myself.question_master? do %>
+    <p>Who is the Fake Artist?</p>
+    <p>
+    <%= for player <- @players do %>
+      <%= if not player.question_master? do %>
+        <button class="vote <%= if @myself.voted_for == player.id do "active" end%>" phx-click="vote" phx-value-player-id="<%= player.id %>"><%= player.name %></button>
+      <% end %>
+    <% end %>
+    <% end %>
+    </p>
+
+    <p class="player-overview">
+      <%= for player <- @players do %>
+        <% voted = (not player.question_master? and player.voted_for != :none) or (player.question_master? and @guess_correct != :none) %>
+        <span title="<%= player.name %>" class="<%= if voted do "active" else "waiting" end%>"><%= String.at(player.name, 0) %></span>
+      <% end %>
+    </p>
+  </div>
+</div>

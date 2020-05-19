@@ -6,7 +6,8 @@ defmodule Fakeartist.Player do
     current_player?: false,
     fake?: false,
     color: :black,
-    voted_for?: :none
+    voted_for?: :none,
+    score: 0
   )
 
   alias Fakeartist.Player

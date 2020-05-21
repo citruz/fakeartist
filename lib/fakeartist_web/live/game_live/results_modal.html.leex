@@ -1,0 +1,31 @@
+<div class="phx-modal" id="results-modal">
+  <div class="phx-modal-content">
+    <div class="phx-modal-close" phx-click="hide_results">&times;</div>
+    <p><b>Subject:</b> <%= @subject %></p>  
+    <p><b><%= @fake_artist %></b> was the fake artist! Their guess was <%= if @guess_correct do "correct" else "wrong" end %>:</p>
+    <blockquote>
+      "<%= @fake_guess %>"
+    </blockquote>
+    <h3>Votes:</h3>
+    <%= for {name, votes, fake?, _points} <- @player_infos do %>
+    <div class="bar-chart">
+      <div><%= name %> <b><%= votes %></b></div>
+      <div>
+        <span style="background-color: <%= if fake? do "red" else "green" end %>; display: inline-block; width: <%= (votes / @num_players) * 100 %>%">&nbsp;</span>
+      </div>
+    </div>
+    <% end %>
+    <p>
+    <%= if @result == :fake_artist_won do %>
+    The fake artist won. Fake artist and question master earn two points each.
+    <% else %>
+    The fake artist lost. Every artist earns one point.
+    <% end %>
+    </p>
+    <%= for {name, _votes, _fake?, points} <- @player_infos do %>
+      <%= if points > 0 do %>
+        <div><%= name %> <b style="color: green">+ <%= points %></b></div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

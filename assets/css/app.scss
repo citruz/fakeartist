@@ -99,8 +99,9 @@
   form {
     margin: 0;
   }
-  select {
+  select, input[type=text] {
     background-color: white;
+    margin-bottom: 0;
   }
 }
 
@@ -182,9 +183,22 @@ $breakpoint-phone: 600px;
       padding: 8px;
       border-radius: 5px;
       background-color: #f1f0f3;
+      position: relative;
+      height: 4rem;
 
       span {
         margin-right: 9px;
+      }
+
+      span.score {
+        position: absolute;
+        top: 0;
+        right: 0.5rem;
+        bottom: 0;
+        height: 4rem;
+        line-height: 4rem;
+        color: #999999;
+        font-weight: bold;
       }
     }
   }
@@ -210,9 +224,7 @@ $breakpoint-phone: 600px;
 
   #chat-input {
     input[type=text] {
-      margin: 0;
       width: 75%;
-      background-color: white;
     }
     button[type=submit] {
       margin: 0;
@@ -341,5 +353,31 @@ $breakpoint-phone: 600px;
       }
     }
     
+  }
+}
+
+#results-modal {
+  .phx-modal-content {
+    margin: 5% auto;
+  }
+
+  .bar-chart {
+    display: flex;
+    margin-bottom: 2rem;
+
+    div {
+      flex: 1;
+
+      &:nth-child(1) {
+        text-align: right;
+        padding-right: 1rem;
+      }
+      &:nth-child(2) {
+        flex: 3;
+        padding: 4px 0;
+        line-height: 1.5rem;
+      }
+    }
+
   }
 }

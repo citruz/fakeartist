@@ -28,9 +28,13 @@
   </div>
 </div>
 <% end %>
-<% # voting modal %>
+<% # results modal %>
+<%= if @state == :waiting_for_next_game and @results_shown do %>
+  <%= live_component @socket, ResultsModal, results: @results, guess_correct: @guess_correct, fake_guess: @fake_guess, subject: @subject %>
+<% end %>
+<% # vote modal %>
 <%= if @state == :voting do %>
-  <%= live_component @socket, VoteModal, players: @players, my_id: @player_id, guess_correct: @guess_correct %>
+  <%= live_component @socket, VoteModal, players: @players, my_id: @player_id, guess_correct: @guess_correct, fake_guess: @fake_guess %>
 <% end %>
 <div id="game" data-token="<%= @token %>">
   <div id="player-list">
@@ -41,6 +45,7 @@
         <%= player.name %>
         <%= if player.question_master? do %>&nbsp;&nbsp;👑<% end %>
         <%= if player.current_player? do %>&nbsp;&nbsp;✏️<% end %>
+        <span class="score"><%= player.score %></span>
       </li>
       <% end %>
     </ul>
@@ -70,6 +75,14 @@
     <div id="stats">
     <%= render_stats_div(assigns, @state) %>
     </div>
+    <%= if @state == :drawing and @i_am_fake do %>
+    <div class="rounded-box">
+      Enter your guess here:
+      <form action="#" phx-change="fake_guess_changed" onsubmit="return false">
+        <input type="text" value="<%= @fake_guess %>" name="guess" />
+      </form>
+    </div>
+    <% end %>
     <div id="messages" class="rounded-box">
       <div id="message-container" phx-hook="chat">
       <%= for message <- @messages do %>

@@ -12,8 +12,10 @@ defmodule Fakeartist.Game do
     i_current_player: :none,
     i_question_master: :none,
     i_fake: :none,
+    fake_guess: "",
     guess_correct: :none,
-    wordlist: Const.wxDEFAULT_WORDLIST()
+    wordlist: Const.wxDEFAULT_WORDLIST(),
+    last_round_results: :none
   )
 
   def start_link(name, player_id) when not is_nil(name) do
@@ -184,6 +186,24 @@ defmodule Fakeartist.Game do
     GenServer.call(pid, :get_guess_correct)
   end
 
+  def get_fake_guess(pid) do
+    GenServer.call(pid, :get_fake_guess)
+  end
+
+  def set_fake_guess(pid, player, guess) do
+    p = Game.get_player(pid, player)
+
+    if Player.fake?(p) do
+      GenServer.call(pid, {:set_fake_guess, guess})
+    else
+      :not_allowed
+    end
+  end
+
+  def get_results(pid) do
+    GenServer.call(pid, :get_results)
+  end
+
   #
   # helpers
   #
@@ -254,11 +274,58 @@ defmodule Fakeartist.Game do
 
     # the controller must have decided if the fake artist was correct
     if votes_complete and state.guess_correct != :none do
-      # -> reveal
-      Rules.reveal(state.fsm)
-    end
+      # calculate results
+      votes = Enum.frequencies_by(state.players, fn p -> Player.voted_for?(p) end)
 
-    state
+      fake_player =
+        Enum.find_value(state.players, fn p -> if Player.fake?(p), do: Player.id(p) end)
+
+      fake_player_votes = Map.get(votes, fake_player, 0)
+      # check if there is a player with more or equal number of votes
+      unmasked =
+        not Enum.any?(votes, fn {p, votes} ->
+          votes >= fake_player_votes and p != :none and p != fake_player
+        end)
+
+      result =
+        if unmasked and not state.guess_correct do
+          :fake_artist_lost
+        else
+          :fake_artist_won
+        end
+
+      # calculate points per player
+      points =
+        Enum.map(state.players, fn p ->
+          # fake artist lost -> artists get one point
+          if result == :fake_artist_lost and not Player.fake?(p) and
+               not Player.question_master?(p) do
+            1
+          else
+            # fake artist won -> fake artist and question master get two points
+            if result == :fake_artist_won and (Player.fake?(p) or Player.question_master?(p)) do
+              2
+            else
+              0
+            end
+          end
+        end)
+
+      # add points
+      points = Enum.zip(state.players, points)
+      Enum.each(points, fn {p, points} -> Player.add_points(p, points) end)
+
+      # results is a tuple of player name, votes, fake?, points
+      results =
+        Enum.map(points, fn {p, points} ->
+          {Player.name(p), Map.get(votes, Player.id(p), 0), Player.fake?(p), points}
+        end)
+
+      Rules.reveal(state.fsm)
+      state |> Map.put(:last_round_results, {result, results})
+    else
+      state
+    end
   end
 
   #
@@ -288,6 +355,7 @@ defmodule Fakeartist.Game do
       i_current_player: state.i_current_player,
       round: Rules.get_round(state.fsm),
       num_rounds: state.num_rounds,
+      fake_guess: state.fake_guess,
       wordlist: state.wordlist
     }
 
@@ -358,6 +426,7 @@ defmodule Fakeartist.Game do
           |> Map.put(:i_current_player, i_cur_player)
           |> Map.put(:i_fake, i_fake)
           |> Map.put(:guess_correct, :none)
+          |> Map.put(:fake_guess, "")
           |> update_players
           |> get_category_and_subject
 
@@ -504,5 +573,23 @@ defmodule Fakeartist.Game do
 
   def handle_call(:get_guess_correct, _from, state) do
     {:reply, state.guess_correct, state}
+  end
+
+  def handle_call(:get_fake_guess, _from, state) do
+    {:reply, state.fake_guess, state}
+  end
+
+  def handle_call({:set_fake_guess, guess}, _from, state) when is_bitstring(guess) do
+    case Rules.set_fake_guess(state.fsm) do
+      :ok ->
+        {:reply, :ok, state |> Map.put(:fake_guess, guess)}
+
+      reply ->
+        {:reply, reply, state}
+    end
+  end
+
+  def handle_call(:get_results, _from, state) do
+    {:reply, state.last_round_results, state}
   end
 end

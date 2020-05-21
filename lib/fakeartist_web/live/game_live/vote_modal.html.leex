@@ -3,7 +3,7 @@
     <%= if @myself.question_master? or @myself.can_control? do %>
     <p>Please decide if the fake artist guessed correctly:</p>
     <blockquote>
-      "Humbug"
+      "<%= @fake_guess %>"
     </blockquote>
     <p>Is this correct?</p>
     <p>

@@ -5,8 +5,6 @@ defmodule FakeartistWeb.GameLive.VoteModal do
 
   @impl true
   def update(assigns, socket) do
-    IO.puts("UPDATE #{inspect(assigns)}")
-
     myself = Enum.find(assigns.players, fn p -> p.id == assigns.my_id end)
 
     socket =

@@ -56,6 +56,10 @@ defmodule Fakeartist.Rules do
     :gen_statem.call(fsm, :next_turn)
   end
 
+  def set_fake_guess(fsm) do
+    :gen_statem.call(fsm, :set_fake_guess)
+  end
+
   def vote(fsm) do
     :gen_statem.call(fsm, :vote)
   end
@@ -228,6 +232,10 @@ defmodule Fakeartist.Rules do
 
   def drawing({:call, from}, :add_player, _state_data) do
     {:keep_state_and_data, {:reply, from, :game_already_started}}
+  end
+
+  def drawing({:call, from}, :set_fake_guess, _state_data) do
+    {:keep_state_and_data, {:reply, from, :ok}}
   end
 
   def drawing({:call, from}, _, _state_data) do

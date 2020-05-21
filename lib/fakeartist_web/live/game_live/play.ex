@@ -3,7 +3,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
   alias Fakeartist.{Game, Global, Player, Const}
   alias FakeartistWeb.Endpoint
-  alias FakeartistWeb.GameLive.VoteModal
+  alias FakeartistWeb.GameLive.{VoteModal, ResultsModal}
 
   defmodule CategoryInput do
     defstruct category: "", subject: ""
@@ -54,7 +54,8 @@ defmodule FakeartistWeb.GameLive.Play do
             |> assign(:category_changeset, category_changeset(%{}))
             |> assign(:min_players, Const.wxMIN_PLAYERS())
             |> assign(:messages, [])
-            |> assign(:chat_input, %{"message" => "asdasd"})
+            |> assign(:chat_input, %{"message" => ""})
+            |> assign(:results_shown, true)
             |> update_game_state
 
           {:ok, socket}
@@ -102,7 +103,8 @@ defmodule FakeartistWeb.GameLive.Play do
         question_master?: Player.question_master?(p),
         current_player?: Player.current_player?(p),
         can_control?: Game.can_control?(game, Player.id(p)),
-        voted_for: Player.voted_for?(p)
+        voted_for: Player.voted_for?(p),
+        score: Player.score(p)
       }
     end)
   end
@@ -126,6 +128,9 @@ defmodule FakeartistWeb.GameLive.Play do
       |> assign(:controller_name, Player.name(Game.controller(game)))
       |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
       |> assign(:guess_correct, Game.get_guess_correct(game))
+      |> assign(:i_am_fake, Player.fake?(socket.assigns.player))
+      |> assign(:fake_guess, Game.get_fake_guess(game))
+      |> assign(:results, Game.get_results(game))
       |> assign(
         :config_changeset,
         config_changeset(%{
@@ -136,6 +141,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
     # IO.puts("update_game_state:")
     # IO.puts("game: #{inspect Game.props(game)}")
+    # IO.puts("assigns: #{inspect socket.assigns}")
     # IO.puts("players: #{inspect socket.assigns.players}")
     # IO.puts("current_player: #{inspect socket.assigns.current_player}")
     # IO.puts("messages: #{inspect socket.assigns.messages}")
@@ -272,15 +278,6 @@ defmodule FakeartistWeb.GameLive.Play do
     {:noreply, socket}
   end
 
-  def handle_event("reveal", _params, socket) do
-    if Game.reveal(socket.assigns.game, socket.assigns.player_id) == :ok do
-      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
-      send(self(), %{event: "new_state"})
-    end
-
-    {:noreply, socket}
-  end
-
   def handle_event("guess_correct", _params, socket) do
     if Game.set_guess_correct(socket.assigns.game, socket.assigns.player_id, true) == :ok do
       Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
@@ -312,6 +309,14 @@ defmodule FakeartistWeb.GameLive.Play do
     {:noreply, socket |> assign(:chat_input, input)}
   end
 
+  def handle_event("fake_guess_changed", %{"guess" => guess}, socket) do
+    if Game.set_fake_guess(socket.assigns.game, socket.assigns.player_id, guess) == :ok do
+      {:noreply, socket |> assign(:fake_guess, guess)}
+    else
+      {:noreply, socket}
+    end
+  end
+
   def handle_event("send_message", %{"chat_input" => %{"message" => message}}, socket) do
     message = String.trim(message)
 
@@ -322,6 +327,10 @@ defmodule FakeartistWeb.GameLive.Play do
     end
 
     {:noreply, socket |> assign(:chat_input, %{"message" => ""})}
+  end
+
+  def handle_event("hide_results", _params, socket) do
+    {:noreply, socket |> assign(:results_shown, false)}
   end
 
   #
@@ -368,21 +377,13 @@ defmodule FakeartistWeb.GameLive.Play do
     """
   end
 
-  defp render_state_div(%{can_control: true} = assigns, :voting) do
-    ~L"""
-      <div class="rounded-box">Voting</div>
-      <button phx-click="reveal">Reveal</button>
-    """
-  end
-
   defp render_state_div(assigns, :voting) do
     ~L"""
       <div class="rounded-box">Voting</div>
     """
   end
 
-  defp render_state_div(assigns, other_state) do
-    IO.inspect(assigns)
+  defp render_state_div(_assigns, other_state) do
     other_state
   end
 

@@ -28,6 +28,14 @@ let hooks = {
       let div = this.el
       div.scrollTop = div.scrollHeight
     }
+  },
+  masterpiece: {
+    mounted() {
+      if (canvas) {
+        let img = this.el
+        img.src = canvas.toDataURL("image/png")
+      }
+    }
   }
 };
   

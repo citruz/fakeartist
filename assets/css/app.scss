@@ -435,6 +435,57 @@ $breakpoint-phone: 600px;
     }
     
   }
+  .masterpiece-container {
+    text-align: center;
+  }
+  // https://codepen.io/chris22smith/pen/PbBwjp
+  .masterpiece-frame {
+    background-color:#ddc;
+    border:solid 30px #eee;
+    border-bottom-color:#fff;
+    border-left-color:#eee;
+    border-radius:2px;
+    border-right-color:#eee;
+    border-top-color:#ddd;
+    box-shadow:0 0 2px 0 rgba(0, 0, 0, 0.25) inset, 0 0px 7px 4px rgba(0, 0, 0, 0.25);
+    box-sizing:border-box;
+    display:inline-block;
+    margin: 20px;
+    height: 400px;
+    padding: 20px;
+    position:relative;
+    text-align:center;
+    &:before {
+      border-radius:2px;
+      bottom: -12px;
+      box-shadow:0 2px 5px 0 rgba(0,0,0,.25) inset;
+      content:"";
+      left:-12px;
+      position:absolute;
+      right:-12px;
+      top:-12px;
+    }
+    &:after {
+      border-radius:2px;
+      bottom:-17px;
+      box-shadow: 0 2px 5px 0 rgba(0,0,0,.25);
+      content:"";
+      left:-17px;
+      position:absolute;
+      right:-17px;
+      top:-17px;
+    }
+    img {
+      border:solid 2px;
+      border-bottom-color:#ffe;
+      border-left-color:#eed;
+      border-right-color:#eed;
+      border-top-color:#ccb;
+      height:300px;
+      width:250px;
+      background: white;
+    }
+  }
 }
 
 #results-modal {
@@ -459,6 +510,5 @@ $breakpoint-phone: 600px;
         line-height: 1.5rem;
       }
     }
-
   }
 }

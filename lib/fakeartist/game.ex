@@ -12,6 +12,8 @@ defmodule Fakeartist.Game do
     i_current_player: :none,
     i_question_master: :none,
     i_fake: :none,
+    # player who determines if the fake artist was correct
+    i_decider: :none,
     fake_guess: "",
     guess_correct: :none,
     wordlist: Const.wxDEFAULT_WORDLIST(),
@@ -62,6 +64,10 @@ defmodule Fakeartist.Game do
   def can_control?(pid, player) do
     (Game.has_question_master?(pid) and Game.is_question_master?(pid, player)) or
       (not Game.has_question_master?(pid) and Game.creator?(pid, player))
+  end
+
+  def can_decide?(pid, player) do
+    GenServer.call(pid, {:can_decide?, player})
   end
 
   def controller(pid) do
@@ -175,7 +181,7 @@ defmodule Fakeartist.Game do
   end
 
   def set_guess_correct(pid, player, bool) do
-    if Game.can_control?(pid, player) do
+    if Game.can_decide?(pid, player) do
       GenServer.call(pid, {:set_guess_correct, bool})
     else
       :not_allowed
@@ -421,11 +427,26 @@ defmodule Fakeartist.Game do
               rem(i_qm + :rand.uniform(num_players - 1), num_players)
           end
 
+        # choose player who decides if fake artist was correct
+        i_decider =
+          case i_qm do
+            :none ->
+              # no question master -> random player which is not the fake artist
+              rem(i_fake + :rand.uniform(num_players - 1), num_players)
+
+            i_qm ->
+              # question master decides
+              i_qm
+          end
+
+        IO.puts("new game: cur_player=#{i_cur_player} fake=#{i_fake} decider=#{i_decider}")
+
         state =
           state
           |> Map.put(:i_question_master, i_qm)
           |> Map.put(:i_current_player, i_cur_player)
           |> Map.put(:i_fake, i_fake)
+          |> Map.put(:i_decider, i_decider)
           |> Map.put(:guess_correct, :none)
           |> Map.put(:fake_guess, "")
           |> update_players
@@ -562,7 +583,7 @@ defmodule Fakeartist.Game do
   end
 
   def handle_call({:set_guess_correct, bool}, _from, state) when is_boolean(bool) do
-    # for now we handle this is a vote
+    # for now we handle this as a vote
     case Rules.vote(state.fsm) do
       :ok ->
         {:reply, :ok, state |> Map.put(:guess_correct, bool) |> check_votes_complete()}
@@ -592,5 +613,24 @@ defmodule Fakeartist.Game do
 
   def handle_call(:get_results, _from, state) do
     {:reply, state.last_round_results, state}
+  end
+
+  def handle_call({:can_decide?, player}, _from, state) do
+    case Rules.show_current_state(state.fsm) do
+      :voting ->
+        {player, player_idx} =
+          state.players
+          |> Enum.with_index()
+          |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
+
+        if player_idx == state.i_decider do
+          {:reply, true, state}
+        else
+          {:reply, false, state}
+        end
+
+      _ ->
+        {:reply, false, state}
+    end
   end
 end

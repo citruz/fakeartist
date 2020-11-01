@@ -1,6 +1,6 @@
 <div class="phx-modal" id="vote-modal">
   <div class="phx-modal-content">
-    <%= if @myself.question_master? or @myself.can_control? do %>
+    <%= if @myself.question_master? or @myself.can_decide? do %>
     <p>Please decide if the fake artist guessed correctly:</p>
     <blockquote>
       "<%= @fake_guess %>"

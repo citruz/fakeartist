@@ -103,6 +103,7 @@ defmodule FakeartistWeb.GameLive.Play do
         question_master?: Player.question_master?(p),
         current_player?: Player.current_player?(p),
         can_control?: Game.can_control?(game, Player.id(p)),
+        can_decide?: Game.can_decide?(game, Player.id(p)),
         voted_for: Player.voted_for?(p),
         score: Player.score(p)
       }

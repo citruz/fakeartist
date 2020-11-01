@@ -26,52 +26,6 @@ defmodule Fakeartist.Const do
       :burlywood
     ]
 
-  def wxWORDLIST,
-    do: %{
-      "ger" => %{
-        "Beruf" => [
-          "BäckerIn",
-          "LehrerIn",
-          "MalerIn"
-        ],
-        "TV" => [
-          "Titanic",
-          "Spiderman",
-          "König der Löwen",
-          "Star Wars",
-          "Harry Potter",
-          "Ironman",
-          "James Bond",
-          "Herr der Ringe",
-          "Findet Nemo",
-          "Fight Club",
-          "Mission Impossible",
-          "Game of Thrones"
-        ]
-      },
-      "eng" => %{
-        "Profession" => [
-          "Baker",
-          "Teacher",
-          "Artist"
-        ],
-        "TV" => [
-          "Titanic",
-          "Spiderman",
-          "The Lion King",
-          "Star Wars",
-          "Harry Potter",
-          "Ironman",
-          "James Bond",
-          "Lord of the Rings",
-          "Finding Nemo",
-          "Fight Club",
-          "Mission Impossible",
-          "Game of Thrones"
-        ]
-      }
-    }
-
-  def wxWORDLISTS, do: ["none"] ++ Map.keys(Const.wxWORDLIST())
+  def wxWORDLISTS, do: ["none", "de", "en"]
   def wxDEFAULT_WORDLIST, do: "none"
 end

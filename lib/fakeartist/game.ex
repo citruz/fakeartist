@@ -1,7 +1,7 @@
 defmodule Fakeartist.Game do
   use GenServer
 
-  alias Fakeartist.{Game, Player, Rules, Const}
+  alias Fakeartist.{Game, Player, Rules, Const, Wordlist_EN, Wordlist_DE}
 
   defstruct(
     players: [],
@@ -255,9 +255,10 @@ defmodule Fakeartist.Game do
   end
 
   defp get_category_and_subject(%Game{wordlist: lang} = state) do
-    categories = Map.keys(Const.wxWORDLIST()[lang])
+    wordlists = %{"de" => Wordlist_DE.wxWORDLIST(), "en" => Wordlist_EN.wxWORDLIST()}
+    categories = Map.keys(wordlists[lang])
     category = Enum.at(categories, :rand.uniform(length(categories)) - 1)
-    subjects = Const.wxWORDLIST()[lang][category]
+    subjects = wordlists[lang][category]
     subject = Enum.at(subjects, :rand.uniform(length(subjects)) - 1)
 
     state

@@ -427,7 +427,7 @@ defmodule FakeartistWeb.GameLive.Play do
         </div>
         <div class="form-group">
           <%= label f, :wordlist %>
-          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"] %>
+          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "de", "English": "en"] %>
         </div>
       </form>
     </div>
@@ -448,7 +448,7 @@ defmodule FakeartistWeb.GameLive.Play do
         </div>
         <div class="form-group">
           <%= label f, :wordlist %>
-          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "ger", "English": "eng"], disabled: true  %>
+          <%= select f, :wordlist, ["None (Questionmaster)": "none", "Deutsch": "de", "English": "en"], disabled: true  %>
         </div>
       </form>
     </div>

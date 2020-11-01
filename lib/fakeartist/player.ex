@@ -64,7 +64,7 @@ defmodule Fakeartist.Player do
     Agent.get(player, fn state -> state.color end)
   end
 
-  def add_points(player, points) when is_integer(points and points > 0) do
+  def add_points(player, points) when is_integer(points) do
     Agent.update(player, fn state -> Map.put(state, :score, Map.get(state, :score) + points) end)
   end
 

@@ -132,6 +132,7 @@ defmodule FakeartistWeb.GameLive.Play do
       |> assign(:i_am_fake, Player.fake?(socket.assigns.player))
       |> assign(:fake_guess, Game.get_fake_guess(game))
       |> assign(:results, Game.get_results(game))
+      |> assign(:results_shown, true)
       |> assign(
         :config_changeset,
         config_changeset(%{

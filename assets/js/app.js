@@ -31,10 +31,10 @@ let hooks = {
   },
   masterpiece: {
     mounted() {
-      if (canvas) {
-        let img = this.el
-        img.src = canvas.toDataURL("image/png")
-      }
+      updateMasterpiece()
+    },
+    updated() {
+      updateMasterpiece()
     }
   }
 };
@@ -129,6 +129,7 @@ function initCanvas() {
     canvasHandler('out', e)
   }, false);
 
+  updateMasterpiece();
   /*var elems = document.getElementsByClassName("color-chooser")[0].children
   Array.from(elems).forEach((el) => {
     el.addEventListener("click", function (e) {
@@ -221,5 +222,16 @@ function canvasHandler(res, e) {
   }
   if (res == 'move' && mouseDown) {
     sendDraw(prevX, prevY, currX, currY);
+  }
+}
+
+function updateMasterpiece() {
+  let img_el = document.getElementById("masterpiece");
+  if (canvas && img_el) {
+    img_el.src = canvas.toDataURL("image/png")
+    let link = document.getElementById("masterpiece-link")
+    if (link) {
+      link.href = canvas.toDataURL("image/png")
+    }
   }
 }

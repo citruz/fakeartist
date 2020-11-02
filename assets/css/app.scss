@@ -452,6 +452,7 @@ $breakpoint-phone: 600px;
     display:inline-block;
     margin: 20px;
     height: 400px;
+    width: 350px;
     padding: 20px;
     position:relative;
     text-align:center;
@@ -484,6 +485,12 @@ $breakpoint-phone: 600px;
       height:300px;
       width:250px;
       background: white;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      bottom: 20px;
+      left: 20px;
+      z-index: 10;
     }
   }
 }

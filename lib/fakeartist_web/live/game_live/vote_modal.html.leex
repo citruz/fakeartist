@@ -2,7 +2,9 @@
   <div class="phx-modal-content">
     <div class="masterpiece-container">
       <div class="masterpiece-frame">
-        <img id="masterpiece" phx-hook="masterpiece" />
+        <a href="#" id="masterpiece-link" download="image.png">
+          <img id="masterpiece" phx-hook="masterpiece" />
+        </a>
       </div>
     </div>
     <%= if @myself.question_master? or @myself.can_decide? do %>

@@ -24,7 +24,10 @@
     <p>
     <%= for player <- @players do %>
       <%= if not player.question_master? do %>
-        <button class="vote <%= if @myself.voted_for == player.id do "active" end%>" phx-click="vote" phx-value-player-id="<%= player.id %>"><%= player.name %></button>
+        <button class="vote <%= if @myself.voted_for == player.id do "active" end%>" phx-click="vote" phx-value-player-id="<%= player.id %>">
+          <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
+          <%= player.name %>
+        </button>
       <% end %>
     <% end %>
     <% end %>

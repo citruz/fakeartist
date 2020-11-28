@@ -425,7 +425,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
         <div class="form-group">
           <%= label f, :num_rounds, "Number of rounds" %>
-          <%= select f, :num_rounds, 2..5 %>
+          <%= select f, :num_rounds, 1..5 %>
         </div>
         <div class="form-group">
           <%= label f, :wordlist %>

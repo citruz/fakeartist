@@ -305,7 +305,7 @@ $breakpoint-phone: 600px;
 
   #chat-input {
     input[type=text] {
-      width: 75%;
+      width: 70%;
     }
     button[type=submit] {
       margin: 0;
@@ -327,18 +327,46 @@ $breakpoint-phone: 600px;
     border: 2px solid black;
   }
 
-  .color-chooser {
-    position: absolute;
-    bottom: 15px;
+  .draw-options {
     width: 200px;
-    left: 200px; 
-    div {
+    .size-choose {
       width: 20px;
       height: 20px;
       float: left;
-      margin-right: 5px;
       border: 2px solid black;
       border-radius: 3px;
+      margin: 0 5px 0 0;
+      padding: 0;
+      background-color: white;
+      &.selected {
+        background-color: rgb(216, 216, 216);
+      }
+      &:hover {
+        background-color: rgb(158, 158, 158);
+      }
+      &::after {
+        content: '';
+        display: block;
+        border: 1px solid black;
+        margin: 0 auto;
+        background-color: black;
+      }
+      &.small::after {
+        border-radius: 2px;
+        height: 4px;
+        width: 4px;
+        margin-top: 1px;
+      }
+      &.medium::after {
+        border-radius: 4px;
+        height: 8px;
+        width: 8px;
+      }
+      &.large::after {
+        border-radius: 6px;
+        height: 12px;
+        width: 12px;
+      }
     }
   }
 

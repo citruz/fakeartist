@@ -130,25 +130,19 @@ function initCanvas() {
   }, false);
 
   updateMasterpiece();
-  /*var elems = document.getElementsByClassName("color-chooser")[0].children
+
+  var elems = document.getElementsByClassName("size-choose")
   Array.from(elems).forEach((el) => {
     el.addEventListener("click", function (e) {
-      setColor(el);
+      // set thickness
+      thickness = el.dataset.thickness;
+      // set selected class
+      Array.from(elems).forEach((el) => {
+        el.classList.remove("selected");
+      });
+      el.classList.add("selected");
     })
   });
-
-  document.getElementById("clear").addEventListener("click", function (e) {
-    sendClear();
-  }); */
-}
-
-function setColor(obj) {
-  color = obj.id;
-  if (color == "white") {
-    thickness = 14;
-  } else {
-    thickness = 2;
-  }
 }
 
 function draw(fromX, fromY, toX, toY, color, thickness) {
@@ -156,16 +150,26 @@ function draw(fromX, fromY, toX, toY, color, thickness) {
     // draw dot
     ctx.beginPath();
     ctx.fillStyle = color;
-    ctx.fillRect(fromX, toY, 2, 2);
+    ctx.arc(fromX, fromY, thickness / 2, 0, 2 * Math.PI, true);
+    ctx.fill()
     ctx.closePath();
   } else {
-    // draw line
+    // draw line with dots at beginning and end
     ctx.beginPath();
-    ctx.moveTo(fromX, fromY);
-    ctx.lineTo(toX, toY);
+    ctx.fillStyle = color;
+    ctx.arc(fromX, fromY, thickness / 2, 0, 2 * Math.PI, true);
+    ctx.fill();
+    ctx.closePath();
+    ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.lineWidth = thickness;
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
     ctx.stroke();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.arc(toX, toY, thickness / 2, 0, 2 * Math.PI, true);
+    ctx.fill();
     ctx.closePath();
   }
 }

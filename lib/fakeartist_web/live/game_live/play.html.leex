@@ -52,18 +52,11 @@
   </div>
   <div class="draw">
     <canvas id="can" width="500" height="600" phx-hook="canvas"></canvas>
-    <%#
-    <div class="color-chooser">
-      <div style="background:green;" id="green""></div>
-      <div style="background:blue;" id="blue"></div>
-      <div style="background:red;" id="red"></div>
-      <div style="background:yellow;" id="yellow"></div>
-      <div style="background:orange;" id="orange"></div>
-      <div style="background:black;" id="black"></div>
-      <div style="background:white;" id="white"></div>
+    <div class="draw-options">
+      <button class="size-choose small selected" data-thickness="2"></button>
+      <button class="size-choose medium" data-thickness="4"></button>
+      <button class="size-choose large" data-thickness="8"></button>
     </div>
-    <input type="button" value="clear" id="clear" size="23">
-    %>
   </div>
   <div class="side">
     <div id="config">

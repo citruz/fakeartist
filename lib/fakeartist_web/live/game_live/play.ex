@@ -127,6 +127,7 @@ defmodule FakeartistWeb.GameLive.Play do
       |> assign(:num_rounds, Game.get_num_rounds(game))
       |> assign(:fake_player_name, fake_player_name(game))
       |> assign(:controller_name, Player.name(Game.controller(game)))
+      |> assign(:my_color, Player.color(socket.assigns.player))
       |> assign(:my_vote, Player.voted_for?(socket.assigns.player))
       |> assign(:guess_correct, Game.get_guess_correct(game))
       |> assign(:i_am_fake, Player.fake?(socket.assigns.player))

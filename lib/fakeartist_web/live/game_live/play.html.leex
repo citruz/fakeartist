@@ -50,12 +50,15 @@
       <% end %>
     </ul>
   </div>
-  <div class="draw">
+  <div class="draw small mode-draw" id="draw" phx-hook="draw">
     <canvas id="can" width="500" height="600" phx-hook="canvas"></canvas>
+    <div id="fake-cursor" style="display: none; background-color: <%= @my_color %>"></div>
     <div class="draw-options">
-      <button class="size-choose small selected" data-thickness="2"></button>
-      <button class="size-choose medium" data-thickness="4"></button>
-      <button class="size-choose large" data-thickness="8"></button>
+      <button class="size-choose small" data-size="small"></button>
+      <button class="size-choose medium" data-size="medium"></button>
+      <button class="size-choose large" data-size="large"></button>
+      <button class="pen-choose draw" data-mode="draw" style="margin-left: 20px;">✏️</button>
+      <button class="pen-choose erase" data-mode="erase">🧽</button>
     </div>
   </div>
   <div class="side">

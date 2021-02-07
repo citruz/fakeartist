@@ -23,6 +23,12 @@ let hooks = {
       connectToGame()
     }
   },
+  draw: {
+    updated() {
+      mode = "draw";
+      size = 2;
+    }
+  },
   chat: {
     updated() { 
       let div = this.el
@@ -55,9 +61,11 @@ var prevY = 0
 var currY = 0
 var w = 0
 var h = 0
+var cursor
+var drawDiv
 
-var color = "black"
-var thickness = 2;
+var mode = "draw";
+var size = 2;
 
 let socket = undefined;
 let channel = undefined;
@@ -92,6 +100,8 @@ function connectToGame() {
   channel.on("clear", () => {
     console.log("clear")
     clear()
+    mode = "draw";
+    size = 2;
   })
 }
 
@@ -100,6 +110,10 @@ function initCanvas() {
   ctx = canvas.getContext("2d");
   w = canvas.width;
   h = canvas.height;
+
+  cursor = document.getElementById("fake-cursor");
+  drawDiv = document.getElementById("draw");
+
 
   canvas.addEventListener("mousemove", function (e) {
     canvasHandler('move', e)
@@ -131,16 +145,23 @@ function initCanvas() {
 
   updateMasterpiece();
 
+  // size chooser
   var elems = document.getElementsByClassName("size-choose")
   Array.from(elems).forEach((el) => {
     el.addEventListener("click", function (e) {
-      // set thickness
-      thickness = el.dataset.thickness;
-      // set selected class
-      Array.from(elems).forEach((el) => {
-        el.classList.remove("selected");
-      });
-      el.classList.add("selected");
+      size = el.dataset.size;
+      drawDiv.classList.remove("small", "medium", "large");
+      drawDiv.classList.add(size);
+    })
+  });
+
+  // pen chooser
+  var elems = document.getElementsByClassName("pen-choose")
+  Array.from(elems).forEach((el) => {
+    el.addEventListener("click", function (e) {
+      mode = el.dataset.mode;
+      drawDiv.classList.remove("mode-erase", "mode-draw");
+      drawDiv.classList.add(`mode-${mode}`);
     })
   });
 }
@@ -175,6 +196,14 @@ function draw(fromX, fromY, toX, toY, color, thickness) {
 }
 
 function sendDraw(fromX, fromY, toX, toY) {
+  var thickness = 2;
+  if (mode === "erase") {
+    thickness = 15;
+  } else if (size === "large") {
+    thickness = 10;
+  } else if (size === "medium") {
+    thickness = 5;
+  }
   channel.push("draw", {
     type: "draw",
     fromX: fromX,
@@ -182,6 +211,7 @@ function sendDraw(fromX, fromY, toX, toY) {
     toX: toX,
     toY: toY,
     thickness: thickness,
+    erase: mode === "erase",
   })
 }
 
@@ -216,16 +246,24 @@ function canvasHandler(res, e) {
     currX = e.layerX - canvas.offsetLeft
     currY = e.layerY - canvas.offsetTop
   }
-  //console.log(`curx: ${currX} cury: ${currY}`)
+  //console.log(`${res} curx: ${currX} cury: ${currY}`)
   if (res == 'down') {
     mouseDown = true;
     sendDraw(currX, currY, currX, currY);
-  }
-  if (res == 'up' || res == "out") {
+  } else if (res == 'up') {
     mouseDown = false;
-  }
-  if (res == 'move' && mouseDown) {
-    sendDraw(prevX, prevY, currX, currY);
+  } else if (res == "out") {
+    mouseDown = false;
+    cursor.style.display = "none";
+  } else if (res == 'move') {
+    // position cursor
+    cursor.style.top = `${currY - cursor.offsetHeight / 2}px`;
+    cursor.style.left = `${currX - cursor.offsetWidth / 2}px`;
+    cursor.style.display = "block";
+
+    if (mouseDown) {
+      sendDraw(prevX, prevY, currX, currY);
+    }
   }
 }
 

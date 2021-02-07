@@ -36,7 +36,10 @@ defmodule FakeartistWeb.GameChannel do
         {:noreply, socket}
 
       color ->
-        body = Map.put(body, :color, color)
+        {erase, body} = Map.pop(body, "erase", false)
+        # "erase" is just drawing white
+        new_color = if erase, do: "white", else: color
+        body = Map.put(body, :color, new_color)
         broadcast!(socket, "draw", body)
         {:noreply, socket}
     end

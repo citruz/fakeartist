@@ -320,6 +320,7 @@ $breakpoint-phone: 600px;
   flex: 0 0 500px;
   height: 600px;
   position: relative;
+  cursor: none;
 
   canvas {
     width: 500px;
@@ -329,21 +330,23 @@ $breakpoint-phone: 600px;
 
   .draw-options {
     width: 200px;
-    .size-choose {
-      width: 20px;
-      height: 20px;
+    button {
+      width: 25px;
+      height: 25px;
+      line-height: 22px;
+      text-align: center;
+      font-size: 0.7em;
       float: left;
       border: 2px solid black;
       border-radius: 3px;
-      margin: 0 5px 0 0;
+      margin: 0 7px 0 0;
       padding: 0;
       background-color: white;
-      &.selected {
-        background-color: rgb(216, 216, 216);
-      }
       &:hover {
         background-color: rgb(158, 158, 158);
       }
+    }
+    .size-choose {
       &::after {
         content: '';
         display: block;
@@ -370,11 +373,37 @@ $breakpoint-phone: 600px;
     }
   }
 
-  #clear {
+  &.small .size-choose.small, &.medium .size-choose.medium, &.large .size-choose.large,
+  &.mode-draw .pen-choose.draw, &.mode-erase .pen-choose.erase {
+    background-color: rgb(216, 216, 216);
+  }
+
+  #fake-cursor {
     position: absolute;
-    bottom: 15px;
-    left: 15px;
-    margin: 0;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    height: 4px;
+    width: 4px;
+    border-radius: 2px;
+  }
+  &.medium #fake-cursor {
+    height: 6px;
+    width: 6px;
+    border-radius: 3px;
+  }
+  &.large #fake-cursor {
+    height: 10px;
+    width: 10px;
+    border-radius: 5px;
+  }
+
+  &.mode-erase #fake-cursor {
+    height: 16px;
+    width: 16px;
+    border-radius: 8px;
+    border: 1px solid black;
+    background-color: white !important;
   }
 }
 

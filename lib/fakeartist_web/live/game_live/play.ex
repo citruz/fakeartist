@@ -446,7 +446,7 @@ defmodule FakeartistWeb.GameLive.Play do
 
   # TODO move into its own component
   defp render_config_div(assigns, state) when state in [:initialized, :ready] do
-    render_config_div_helper(assigns, Player.question_master?(assigns.player))
+    render_config_div_helper(assigns, Game.can_control?(assigns.game, Player.id(assigns.player)))
   end
 
   defp render_config_div(_assigns, _other_state), do: ""

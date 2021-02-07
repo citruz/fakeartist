@@ -26,7 +26,6 @@ defmodule Fakeartist.Game do
 
   def init({name, player_id}) do
     {:ok, player} = Player.start_link(name, player_id)
-    Player.set_question_master(player, true)
     {:ok, fsm} = Rules.start_link(Const.wxDEFAULT_NUM_ROUNDS())
     {:ok, %Game{players: [player], fsm: fsm}}
   end
@@ -34,7 +33,7 @@ defmodule Fakeartist.Game do
   def update_config(pid, player, num_rounds, wordlist) when is_integer(num_rounds) do
     if num_rounds >= 1 and
          wordlist in Const.wxWORDLISTS() and
-         Game.is_question_master?(pid, player) do
+         Game.can_control?(pid, player) do
       GenServer.call(pid, {:update_config, num_rounds, wordlist})
     else
       {:error, :not_allowed}
@@ -243,6 +242,7 @@ defmodule Fakeartist.Game do
       Player.set_current_player(p, state.i_current_player == i)
       Player.set_fake(p, state.i_fake == i)
       Player.set_question_master(p, state.i_question_master == i)
+      Player.set_color(p, Enum.at(Const.wxCOLORS(), i))
     end)
 
     state
@@ -347,7 +347,19 @@ defmodule Fakeartist.Game do
 
   defp remove_inactive_players(state) do
     new_players = Enum.filter(state.players, fn p -> Player.active?(p) end)
-    state |> Map.put(:players, new_players)
+
+    state
+    |> Map.put(:players, new_players)
+    # ensure question master index is valid
+    |> Map.put(
+      :i_question_master,
+      if state.i_question_master == :none do
+        :none
+      else
+        rem(state.i_question_master, length(new_players))
+      end
+    )
+    |> update_players
   end
 
   defp get_player_and_index(state, player_id) do
@@ -434,8 +446,12 @@ defmodule Fakeartist.Game do
     case Rules.add_player(state.fsm) do
       :ok ->
         {:ok, player} = Player.start_link(name, id)
-        Player.set_color(player, Enum.at(Const.wxCOLORS(), length(state.players) + 1))
-        state = Map.put(state, :players, state.players ++ [player])
+
+        state =
+          state
+          |> Map.put(:players, state.players ++ [player])
+          |> update_players
+
         {:reply, {:ok, player}, state}
 
       reply ->
@@ -536,12 +552,17 @@ defmodule Fakeartist.Game do
   end
 
   def handle_call(:get_question_master, _from, state) do
-    player = Enum.find(state.players, fn player -> Player.question_master?(player) end)
+    player =
+      case state.i_question_master do
+        :none -> Enum.at(state.players, 0)
+        idx -> Enum.at(state.players, idx)
+      end
+
     {:reply, player, state}
   end
 
   def handle_call(:has_question_master, _from, state) do
-    {:reply, state.wordlist == "none", state}
+    {:reply, state.i_question_master != :none, state}
   end
 
   def handle_call(:get_state, _from, state) do

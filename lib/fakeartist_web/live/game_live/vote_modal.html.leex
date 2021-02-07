@@ -7,7 +7,7 @@
         </a>
       </div>
     </div>
-    <%= if @myself.question_master? or @myself.can_decide? do %>
+    <%= if @myself.can_decide? do %>
     <p>Please decide if the fake artist guessed correctly:</p>
     <blockquote>
       "<%= @fake_guess %>"

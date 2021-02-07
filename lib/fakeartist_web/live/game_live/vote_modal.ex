@@ -1,8 +1,6 @@
 defmodule FakeartistWeb.GameLive.VoteModal do
   use FakeartistWeb, :live_component
 
-  alias Fakeartist.{Game, Player}
-
   @impl true
   def update(assigns, socket) do
     myself = Enum.find(assigns.players, fn p -> p.id == assigns.my_id end)

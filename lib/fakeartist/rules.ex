@@ -122,7 +122,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
-  def initialized({:call, from}, :has_started, state_data) do
+  def initialized({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, false}}
   end
 
@@ -170,7 +170,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
-  def ready({:call, from}, :has_started, state_data) do
+  def ready({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, false}}
   end
 
@@ -207,7 +207,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
-  def selecting_category({:call, from}, :has_started, state_data) do
+  def selecting_category({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, true}}
   end
 
@@ -281,7 +281,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
-  def drawing({:call, from}, :has_started, state_data) do
+  def drawing({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, true}}
   end
 
@@ -318,7 +318,7 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.round}}
   end
 
-  def voting({:call, from}, :has_started, state_data) do
+  def voting({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, true}}
   end
 
@@ -363,7 +363,7 @@ defmodule Fakeartist.Rules do
     {:keep_state, state_data, {:reply, from, result}}
   end
 
-  def waiting_for_next_game({:call, from}, :has_started, state_data) do
+  def waiting_for_next_game({:call, from}, :has_started, _state_data) do
     {:keep_state_and_data, {:reply, from, true}}
   end
 

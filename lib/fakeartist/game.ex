@@ -658,7 +658,7 @@ defmodule Fakeartist.Game do
   def handle_call({:can_decide?, player}, _from, state) do
     case Rules.show_current_state(state.fsm) do
       :voting ->
-        {player, player_idx} = get_player_and_index(state, player)
+        {_, player_idx} = get_player_and_index(state, player)
 
         if player_idx == state.i_decider do
           {:reply, true, state}

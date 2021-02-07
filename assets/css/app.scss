@@ -136,6 +136,11 @@ header {
   cursor: pointer;
 }
 
+/* Button styles */
+.btn-danger {
+  background-color: rgb(155, 0, 0);
+  border-color: rgb(105, 1, 1);
+}
 
 /* Alerts and form errors */
 .alert {
@@ -222,7 +227,7 @@ $breakpoint-phone: 600px;
     flex: 1 0 200px;
     padding-left: 10px;
   }
-  #player-list {
+  #left-sidebar {
     flex: 1 0 200px;
     padding-right: 10px;
   }
@@ -257,7 +262,7 @@ $breakpoint-phone: 600px;
   }
 }
 
-#player-list {
+#left-sidebar {
   ul {
     li {
       list-style: none;
@@ -281,6 +286,34 @@ $breakpoint-phone: 600px;
         color: #999999;
         font-weight: bold;
       }
+
+      &.player-inactive {
+        opacity: 0.5;
+      }
+
+      &#leave-game {
+        background-color: rgb(255, 143, 143);
+        text-align: center;
+        padding: 0px;
+        &:hover {
+          background-color: rgb(255, 101, 101);
+        }
+        a {
+          padding: 8px;
+          display: block;
+          width: 100%;
+          height: 100%;
+          color: #9f2323;
+          font-weight: bolder;
+          &:hover {
+            color: #7c1b1b;
+          }
+        }
+      }
+    }
+
+    &#player-list {
+      min-height: 535px;
     }
   }
 }

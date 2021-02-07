@@ -54,7 +54,7 @@ defmodule Fakeartist.Game do
   end
 
   def creator?(pid, player) do
-    Game.get_player_idx(pid, player) == 0
+    Player.id(Game.get_creator(pid)) == player
   end
 
   def get_creator(pid) do
@@ -96,7 +96,11 @@ defmodule Fakeartist.Game do
         GenServer.call(pid, {:add_player, name, id})
 
       player ->
-        {:ok, player}
+        if Player.active?(player) do
+          {:ok, player}
+        else
+          {:cannot_rejoin, nil}
+        end
     end
   end
 
@@ -210,16 +214,22 @@ defmodule Fakeartist.Game do
     GenServer.call(pid, :get_results)
   end
 
+  def remove_player(pid, player) do
+    GenServer.call(pid, {:remove_player, player})
+  end
+
   #
   # helpers
   #
-  defp get_next_player(state) do
-    # IO.puts("get_next_player: #{inspect state}")
+  defp get_next_player(state, offset \\ 1) do
     num_players = length(state.players)
-    idx = rem(state.i_current_player + 1, num_players)
+    idx = rem(state.i_current_player + offset, num_players)
 
-    if idx == state.i_question_master do
-      rem(idx + 1, num_players)
+    active = Player.active?(Enum.at(state.players, idx))
+
+    if idx == state.i_question_master or !active do
+      # skip inactive players and the qm
+      get_next_player(state, offset + 1)
     else
       idx
     end
@@ -276,7 +286,7 @@ defmodule Fakeartist.Game do
     # all artists must have voted
     votes_complete =
       Enum.all?(state.players, fn p ->
-        Player.question_master?(p) or Player.voted_for?(p) != :none
+        Player.question_master?(p) or !Player.active?(p) or Player.voted_for?(p) != :none
       end)
 
     # the controller must have decided if the fake artist was correct
@@ -335,6 +345,56 @@ defmodule Fakeartist.Game do
     end
   end
 
+  defp remove_inactive_players(state) do
+    new_players = Enum.filter(state.players, fn p -> Player.active?(p) end)
+    state |> Map.put(:players, new_players)
+  end
+
+  defp get_player_and_index(state, player_id) do
+    state.players
+    |> Enum.with_index()
+    |> Enum.find({nil, nil}, fn {p, _i} -> Player.id(p) == player_id end)
+  end
+
+  defp do_next_turn(state) do
+    case Rules.next_turn(state.fsm) do
+      :ok ->
+        state =
+          state
+          |> Map.put(:i_current_player, get_next_player(state))
+          |> update_players
+
+        {:ok, state}
+
+      reply ->
+        {reply, state}
+    end
+  end
+
+  defp get_decider(i_qm, i_fake, state) do
+    num_players = length(state.players)
+
+    case i_qm do
+      :none ->
+        # no question master -> random player which is not the fake artist
+        i_decider = rem(i_fake + :rand.uniform(num_players - 1), num_players)
+
+        # check if chosen player is active
+        player = Enum.at(state.players, i_decider)
+
+        if !Player.active?(player) do
+          # repeat until we have a valid player
+          get_decider(i_qm, i_fake, state)
+        else
+          i_decider
+        end
+
+      i_qm ->
+        # question master decides
+        i_qm
+    end
+  end
+
   #
   # handlers
   #
@@ -348,7 +408,8 @@ defmodule Fakeartist.Game do
   end
 
   def handle_call(:get_creator, _from, state) do
-    {:reply, Enum.at(state.players, 0), state}
+    # creator is the first active player
+    {:reply, Enum.find(state.players, fn p -> Player.active?(p) end), state}
   end
 
   def handle_call(:props, _from, state) do
@@ -400,6 +461,9 @@ defmodule Fakeartist.Game do
   def handle_call(:start_game, _from, state) do
     case Rules.start_game(state.fsm) do
       :ok ->
+        # player cleanup
+        state = remove_inactive_players(state)
+
         num_players = length(state.players)
         # select next qm
         i_qm = get_next_question_master(state)
@@ -428,18 +492,7 @@ defmodule Fakeartist.Game do
           end
 
         # choose player who decides if fake artist was correct
-        i_decider =
-          case i_qm do
-            :none ->
-              # no question master -> random player which is not the fake artist
-              rem(i_fake + :rand.uniform(num_players - 1), num_players)
-
-            i_qm ->
-              # question master decides
-              i_qm
-          end
-
-        IO.puts("new game: cur_player=#{i_cur_player} fake=#{i_fake} decider=#{i_decider}")
+        i_decider = get_decider(i_qm, i_fake, state)
 
         state =
           state
@@ -469,10 +522,7 @@ defmodule Fakeartist.Game do
   def handle_call({:can_draw?, player}, _from, state) do
     case Rules.show_current_state(state.fsm) do
       :drawing ->
-        {player, player_idx} =
-          state.players
-          |> Enum.with_index()
-          |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
+        {player, player_idx} = get_player_and_index(state, player)
 
         if player_idx == state.i_current_player do
           {:reply, Player.color(player), state}
@@ -546,18 +596,8 @@ defmodule Fakeartist.Game do
     player_idx = state.players |> Enum.find_index(fn p -> Player.id(p) == player end)
 
     if player_idx == state.i_current_player do
-      case Rules.next_turn(state.fsm) do
-        :ok ->
-          state =
-            state
-            |> Map.put(:i_current_player, get_next_player(state))
-            |> update_players
-
-          {:reply, :ok, state}
-
-        reply ->
-          {:reply, reply, state}
-      end
+      {result, state} = do_next_turn(state)
+      {:reply, result, state}
     else
       {:reply, :error, state}
     end
@@ -618,10 +658,7 @@ defmodule Fakeartist.Game do
   def handle_call({:can_decide?, player}, _from, state) do
     case Rules.show_current_state(state.fsm) do
       :voting ->
-        {player, player_idx} =
-          state.players
-          |> Enum.with_index()
-          |> Enum.find(fn {p, _i} -> Player.id(p) == player end)
+        {player, player_idx} = get_player_and_index(state, player)
 
         if player_idx == state.i_decider do
           {:reply, true, state}
@@ -631,6 +668,55 @@ defmodule Fakeartist.Game do
 
       _ ->
         {:reply, false, state}
+    end
+  end
+
+  def handle_call({:remove_player, player}, _from, state) do
+    {player, player_idx} = get_player_and_index(state, player)
+
+    if player != nil do
+      case Rules.remove_player(state.fsm) do
+        :ok ->
+          Player.set_inactive(player)
+
+          state =
+            if !Rules.has_started(state.fsm) do
+              # if the game has not started yet we can remove the player immediately...
+              state |> remove_inactive_players
+            else
+              # ... otherwise we will keep the player in the list until the end of the round and need to do some checks
+              # check if player is current player -> next turn
+              state =
+                if player_idx == state.i_current_player do
+                  {_, state} = do_next_turn(state)
+                  state
+                else
+                  state
+                end
+
+              # check if player is the decider -> reassign
+              state =
+                if player_idx == state.i_decider do
+                  state
+                  |> Map.put(
+                    :i_decider,
+                    get_decider(state.i_question_master, state.i_fake, state)
+                  )
+                  |> update_players
+                else
+                  state
+                end
+
+              state
+            end
+
+          {:reply, :ok, state}
+
+        reply ->
+          {:reply, reply, state}
+      end
+    else
+      {:reply, :unknown_player, state}
     end
   end
 end

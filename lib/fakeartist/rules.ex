@@ -34,6 +34,10 @@ defmodule Fakeartist.Rules do
     :gen_statem.call(fsm, :get_turn)
   end
 
+  def has_started(fsm) do
+    :gen_statem.call(fsm, :has_started)
+  end
+
   ## transitions
 
   def add_player(fsm) do
@@ -68,6 +72,24 @@ defmodule Fakeartist.Rules do
     :gen_statem.call(fsm, :reveal)
   end
 
+  def remove_player(fsm) do
+    :gen_statem.call(fsm, :remove_player)
+  end
+
+  ## helpers
+
+  defp remove_player_helper(state_data, min_players) do
+    num_players = state_data.num_players - 1
+
+    if num_players < min_players do
+      # cannot remove last player
+      {:error, state_data}
+    else
+      state_data = Map.put(state_data, :num_players, num_players)
+      {:ok, state_data}
+    end
+  end
+
   ## states
 
   def initialized({:call, from}, :show_current_state, _state_data) do
@@ -98,6 +120,10 @@ defmodule Fakeartist.Rules do
 
   def initialized({:call, from}, :get_turn, state_data) do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
+  end
+
+  def initialized({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, false}}
   end
 
   def initialized({:call, from}, _, _state_data) do
@@ -144,6 +170,27 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
+  def ready({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, false}}
+  end
+
+  def ready({:call, from}, :remove_player, state_data) do
+    {result, state_data} = remove_player_helper(state_data, 1)
+
+    case result do
+      :ok ->
+        # reevaluate if min players are present
+        if state_data.num_players >= Const.wxMIN_PLAYERS() do
+          {:keep_state, state_data, {:reply, from, :ok}}
+        else
+          {:next_state, :initialized, state_data, {:reply, from, :ok}}
+        end
+
+      reply ->
+        {:keep_state_and_data, {:reply, from, reply}}
+    end
+  end
+
   def ready({:call, from}, _, _state_data) do
     {:keep_state_and_data, {:reply, from, :error}}
   end
@@ -158,6 +205,10 @@ defmodule Fakeartist.Rules do
 
   def selecting_category({:call, from}, :get_turn, state_data) do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
+  end
+
+  def selecting_category({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, true}}
   end
 
   def selecting_category({:call, from}, :show_current_state, _state_data) do
@@ -230,12 +281,21 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, state_data.turn}}
   end
 
+  def drawing({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, true}}
+  end
+
   def drawing({:call, from}, :add_player, _state_data) do
     {:keep_state_and_data, {:reply, from, :game_already_started}}
   end
 
   def drawing({:call, from}, :set_fake_guess, _state_data) do
     {:keep_state_and_data, {:reply, from, :ok}}
+  end
+
+  def drawing({:call, from}, :remove_player, state_data) do
+    {result, state_data} = remove_player_helper(state_data, Const.wxMIN_PLAYERS())
+    {:keep_state, state_data, {:reply, from, result}}
   end
 
   def drawing({:call, from}, _, _state_data) do
@@ -256,6 +316,10 @@ defmodule Fakeartist.Rules do
 
   def voting({:call, from}, :get_round, state_data) do
     {:keep_state_and_data, {:reply, from, state_data.round}}
+  end
+
+  def voting({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, true}}
   end
 
   def voting({:call, from}, :add_player, _state_data) do
@@ -294,27 +358,16 @@ defmodule Fakeartist.Rules do
     {:keep_state_and_data, {:reply, from, :game_already_started}}
   end
 
+  def waiting_for_next_game({:call, from}, :remove_player, state_data) do
+    {result, state_data} = remove_player_helper(state_data, Const.wxMIN_PLAYERS())
+    {:keep_state, state_data, {:reply, from, result}}
+  end
+
+  def waiting_for_next_game({:call, from}, :has_started, state_data) do
+    {:keep_state_and_data, {:reply, from, true}}
+  end
+
   def waiting_for_next_game({:call, from}, _, _state_data) do
-    {:keep_state_and_data, {:reply, from, :error}}
-  end
-
-  def game_over({:call, from}, :show_current_state, _state_data) do
-    {:keep_state_and_data, {:reply, from, :game_over}}
-  end
-
-  def game_over({:call, from}, :get_round, state_data) do
-    {:keep_state_and_data, {:reply, from, state_data.round}}
-  end
-
-  def game_over({:call, from}, :get_turn, state_data) do
-    {:keep_state_and_data, {:reply, from, state_data.turn}}
-  end
-
-  def game_over({:call, from}, :add_player, _state_data) do
-    {:keep_state_and_data, {:reply, from, :game_already_started}}
-  end
-
-  def game_over({:call, from}, _, _state_data) do
     {:keep_state_and_data, {:reply, from, :error}}
   end
 end

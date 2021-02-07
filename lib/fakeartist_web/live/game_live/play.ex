@@ -105,7 +105,13 @@ defmodule FakeartistWeb.GameLive.Play do
         can_control?: Game.can_control?(game, Player.id(p)),
         can_decide?: Game.can_decide?(game, Player.id(p)),
         voted_for: Player.voted_for?(p),
-        score: Player.score(p)
+        score: Player.score(p),
+        state:
+          if Player.active?(p) do
+            "active"
+          else
+            "inactive"
+          end
       }
     end)
   end
@@ -134,6 +140,7 @@ defmodule FakeartistWeb.GameLive.Play do
       |> assign(:fake_guess, Game.get_fake_guess(game))
       |> assign(:results, Game.get_results(game))
       |> assign(:results_shown, true)
+      |> assign(:confirm_leave, false)
       |> assign(
         :config_changeset,
         config_changeset(%{
@@ -157,8 +164,6 @@ defmodule FakeartistWeb.GameLive.Play do
 
   @impl true
   def handle_info(%{event: "new_player", payload: %{name: player_name, color: color}}, socket) do
-    IO.puts("new player")
-
     socket =
       socket
       |> assign(:messages, socket.assigns.messages ++ [{:join, color, player_name}])
@@ -182,6 +187,15 @@ defmodule FakeartistWeb.GameLive.Play do
     socket =
       socket
       |> assign(:messages, socket.assigns.messages ++ [{:message, player_name, message}])
+
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "player_left", payload: %{name: player_name, color: color}}, socket) do
+    socket =
+      socket
+      |> assign(:messages, socket.assigns.messages ++ [{:left, color, player_name}])
+      |> update_game_state
 
     {:noreply, socket}
   end
@@ -334,6 +348,29 @@ defmodule FakeartistWeb.GameLive.Play do
 
   def handle_event("hide_results", _params, socket) do
     {:noreply, socket |> assign(:results_shown, false)}
+  end
+
+  def handle_event("confirm_leave", _params, socket) do
+    {:noreply, socket |> assign(:confirm_leave, true)}
+  end
+
+  def handle_event("dont_leave", _params, socket) do
+    {:noreply, socket |> assign(:confirm_leave, false)}
+  end
+
+  def handle_event("leave_game", _params, socket) do
+    if Game.remove_player(socket.assigns.game, socket.assigns.player_id) == :ok do
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "player_left", %{
+        name: Player.name(socket.assigns.player),
+        color: socket.assigns.my_color
+      })
+
+      Endpoint.broadcast_from(self(), socket.assigns.topic, "new_state", %{})
+      send(self(), %{event: "new_state"})
+      {:noreply, socket |> push_redirect(to: Routes.game_index_path(socket, :index))}
+    else
+      {:noreply, socket |> assign(:confirm_leave, false)}
+    end
   end
 
   #

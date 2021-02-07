@@ -36,11 +36,25 @@
 <%= if @state == :voting do %>
   <%= live_component @socket, VoteModal, players: @players, my_id: @player_id, guess_correct: @guess_correct, fake_guess: @fake_guess %>
 <% end %>
+<% # confirm leave modal %>
+<%= if @confirm_leave do %>
+<div class="phx-modal">
+  <div class="phx-modal-content">
+    <h2>Confirm</h2>
+    <p>Do you really want to leave the game? You cannot re-join later.</p>
+    <p>
+      <button class="" phx-click="dont_leave">Stay</button>
+      <button class="btn-danger" phx-click="leave_game">Leave</button>
+    </p>
+  </div>
+</div>
+<% end %>
 <div id="game" data-token="<%= @token %>">
-  <div id="player-list">
-    <ul>
+  <div id="left-sidebar">
+    <% # player list %>
+    <ul id="player-list">
       <%= for player <- @players do %>
-      <li>
+      <li class="player-<%= player.state %>">
         <span class="color" style="background-color: <%= player.color %>">&nbsp;&nbsp;</span>
         <%= player.name %>
         <%= if player.question_master? do %>&nbsp;&nbsp;👑<% end %>
@@ -48,6 +62,9 @@
         <span class="score"><%= player.score %></span>
       </li>
       <% end %>
+    </ul>
+    <ul>
+      <li id="leave-game"><a href="#" phx-click="confirm_leave">Leave Game</a></li>
     </ul>
   </div>
   <div class="draw small mode-draw" id="draw" phx-hook="draw">
@@ -85,6 +102,8 @@
         <%= case message do %>
           <% {:join, color, player} -> %>
             <p><span style="color:<%= color %>"><%= player %> joined</span></p>
+          <% {:left, color, player} -> %>
+            <p><span style="color:<%= color %>"><%= player %> left</span></p>
           <% {:message, player, text} -> %>
             <p><span><%= player %> </span><%= text %></p>
         <% end %>

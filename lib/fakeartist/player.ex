@@ -7,7 +7,8 @@ defmodule Fakeartist.Player do
     fake?: false,
     color: :black,
     voted_for?: :none,
-    score: 0
+    score: 0,
+    active?: true
   )
 
   alias Fakeartist.Player
@@ -74,6 +75,14 @@ defmodule Fakeartist.Player do
 
   def set_color(player, color) do
     Agent.update(player, fn state -> Map.put(state, :color, color) end)
+  end
+
+  def active?(player) do
+    Agent.get(player, fn state -> state.active? end)
+  end
+
+  def set_inactive(player) do
+    Agent.update(player, fn state -> Map.put(state, :active?, false) end)
   end
 
   def to_string(player) do

@@ -35,8 +35,10 @@
 
     <p class="player-overview">
       <%= for player <- @players do %>
-        <% voted = (not player.question_master? and player.voted_for != :none) or (player.question_master? and @guess_correct != :none) %>
-        <span title="<%= player.name %>" class="<%= if voted do "active" else "waiting" end%>"><%= String.at(player.name, 0) %></span>
+        <%= if player.state == "active" do %>
+          <% voted = (not player.question_master? and player.voted_for != :none) or (player.question_master? and @guess_correct != :none) %>
+          <span title="<%= player.name %>" class="<%= if voted do "active" else "waiting" end%>"><%= String.at(player.name, 0) %></span>
+        <% end %>
       <% end %>
     </p>
   </div>

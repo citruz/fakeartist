@@ -33,6 +33,8 @@ jobs:
       run: earthly --version
     - name: Run build
       run: earthly --ci --push +build-img
+    - name: List images
+      run: docker image ls
     - name: Export image
       run: docker save citruz/fakeartist:latest > fakeartist.img
     - name: Store image as artifact

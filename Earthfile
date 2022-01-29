@@ -41,7 +41,7 @@ build:
 
 build-img:
     FROM alpine:3.15
-    RUN apk add --no-cache openssl ncurses-libs
+    RUN apk add --no-cache openssl ncurses-libs libstdc++ gcc
     WORKDIR /app
     RUN chown nobody:nobody /app
     USER nobody:nobody

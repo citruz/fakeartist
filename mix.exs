@@ -5,7 +5,7 @@ defmodule Fakeartist.MixProject do
     [
       app: :fakeartist,
       version: "0.1.0",
-      elixir: "~> 1.11",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
@@ -20,7 +20,7 @@ defmodule Fakeartist.MixProject do
   def application do
     [
       mod: {Fakeartist.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :crypto]
     ]
   end
 

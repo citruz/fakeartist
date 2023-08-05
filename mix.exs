@@ -7,7 +7,7 @@ defmodule Fakeartist.MixProject do
       version: "0.1.0",
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+      compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps()
@@ -41,7 +41,6 @@ defmodule Fakeartist.MixProject do
       {:phoenix_live_view, "~> 0.15.4"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 0.4"},
-      {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:distillery, "~> 2.1"},
       {:plug_cowboy, "~> 2.0"},

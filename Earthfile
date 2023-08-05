@@ -14,10 +14,10 @@ mix-deps:
     SAVE ARTIFACT deps /deps
 
 assets:
-    FROM node:16
+    FROM node:18
     COPY +mix-deps/deps deps
     COPY assets/package.json assets/package-lock.json ./assets/
-    RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error
+    RUN npm --prefix ./assets ci --progress=false --no-audit --loglevel=error --legacy-peer-deps
     COPY --dir assets ./
     RUN npm run deploy --prefix ./assets
     SAVE ARTIFACT ./priv/static static
